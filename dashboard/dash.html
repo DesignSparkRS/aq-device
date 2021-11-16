@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <script src="chroma.min.js"></script>
+
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 320px;
+            height: 240px;
+        }
+
+        .metric {
+            width: 49%;
+            height: 49%;
+            float: left;
+            text-align: center;
+            margin: 0.5%;
+            background-color: #bbb;
+            border-radius: 10px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var vocColourScale = chroma.scale(['green', 'red']).domain([100, 500]).mode('lrgb').correctLightness();
+        var co2ColourScale = chroma.scale(['green', 'red']).domain([0, 2000]).mode('lrgb').correctLightness();
+
+        let socket = new WebSocket("ws://airquality:8765");
+
+        socket.onmessage = function(event) {
+            console.log(event.data);
+            dataObj = JSON.parse(event.data);
+
+            // Populate temperature
+            if(dataObj.hasOwnProperty('thv')) {
+                document.getElementById("tempText").innerHTML = dataObj['thv']['temperature'];
+            } else {
+                document.getElementById("tempText").innerHTML = "--";
+            }
+
+            // Populate humidity
+            if(dataObj.hasOwnProperty('thv')) {
+                document.getElementById("humidityText").innerHTML = dataObj['thv']['humidity'];
+            } else {
+                document.getElementById("humidityText").innerHTML = "--";
+            }
+
+            // Populate and colour VOC index
+            if(dataObj.hasOwnProperty('thv')) {
+                document.getElementById("vocText").innerHTML = dataObj['thv']['vocIndex'];
+                document.getElementById("vocMetric").style.backgroundColor = vocColourScale(dataObj['thv']['vocIndex']).hex();
+            } else {
+                document.getElementById("vocText").innerHTML = "--";
+                document.getElementById("vocMetric").style.backgroundColor = '#bbb';
+            }
+
+            // Populate and colour CO2
+            if(dataObj.hasOwnProperty('co2')) {
+                document.getElementById("co2Text").innerHTML = dataObj['co2']['co2'];
+                document.getElementById("co2Metric").style.backgroundColor = co2ColourScale(dataObj['co2']['co2']).hex();
+            } else {
+                document.getElementById("co2Text").innerHTML = "--";
+                document.getElementById("co2Metric").style.backgroundColor = '#bbb';
+            }
+
+            if(dataObj.hasOwnProperty('pm')) {
+                document.getElementById("pm1Text").innerHTML = dataObj['pm']['pm1.0'];
+                document.getElementById("pm25Text").innerHTML = dataObj['pm']['pm2.5'];
+                document.getElementById("pm4Text").innerHTML = dataObj['pm']['pm4.0'];
+                document.getElementById("pm10Text").innerHTML = dataObj['pm']['pm10'];
+            } else {
+                document.getElementById("pm1Text").innerHTML = "--";
+                document.getElementById("pm25Text").innerHTML = "--";
+                document.getElementById("pm4Text").innerHTML = "--";
+                document.getElementById("pm10Text").innerHTML = "--";
+            }
+        }
+    </script>
+
+    <title>Websocket Data Test</title>
+</head>
+<body>
+    <div class="metric" id="tempRhMetric">
+        <h5>T & RH</h5>
+        <h1><span id="tempText"></span><small>°C</small></h1>
+        <h1><span id="humidityText"></span><small>%</small></h1>
+    </div>
+    <div class="metric" id="vocMetric">
+        <h5>VOC</h5>
+        <h1 id="vocText"></h1>
+    </div>
+    <div class="metric" id="co2Metric">
+        <h5>CO<sub>2</sub></h5>
+        <h1><span id="co2Text"></span><small>ppm</small></h1>
+    </div>
+    <div class="metric" id="pmMetric">
+        <h5><small>PM1.0</small> <span id="pm1Text"></span></h5>
+        <h5><small>PM2.5</small> <span id="pm25Text"></span></h5>
+        <h5><small>PM4.0</small> <span id="pm4Text"></span></h5>
+        <h5><small>PM10</small> <span id="pm10Text"></span></h5>
+    </div>
+    <!-- Leave this at the bottom -->
+    <script src="bootstrap.bundle.min.js"></script>
+</body>
+</html>

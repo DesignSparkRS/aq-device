@@ -1,0 +1,10 @@
+[Unit]
+Description=AQ Main application
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/aq-device/firmware/aq.py
+TimeoutSec=60
+
+[Install]
+WantedBy=multi-user.target

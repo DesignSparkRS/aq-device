@@ -1,0 +1,27 @@
+[ESDK]
+friendlyname = "CHANGEME"
+gps = false
+latitude = 0.0
+longitude = 0.0
+debug = false
+
+[local]
+csv = false
+
+[mqtt]
+broker = "localhost"
+basetopic = "airquality"
+username = ""
+password = ""
+
+[prometheus.private]
+username = "232460"
+password = "eyJrIjoiOGUzZTQ0YzRjNzVlMDYyY2Y0YTk4MTNkMTA2NzhjNWFlOTY2M2VkMCIsIm4iOiJBQiBEdW1teSBTdGF0cyIsImlkIjo1NTUzMjZ9"
+url = "prometheus-prod-01-eu-west-0.grafana.net/api/prom/push"
+interval = 300           			# 5 minute push interval
+
+[prometheus.global]
+username = ""
+password = ""
+url = "prometheus.aq.designspark.io/api/prom/push"
+interval = 600           			# 10 minute push interval

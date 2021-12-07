@@ -7,6 +7,7 @@ CSV writer helper class
 
 from DesignSpark.ESDK import AppLogger
 import csv
+import copy
 from datetime import datetime
 
 class CsvWriter:
@@ -24,7 +25,7 @@ class CsvWriter:
             csvWriter.writeheader()
 
     def addRow(self, sensorData):
-        sensorDataArray = dict(sensorData)
+        sensorDataArray = copy.deepcopy(sensorData)
         try:
             # Strip other keys so all we're left with is sensor data to iterate over
             location = sensorDataArray.pop("geohash", None)
@@ -32,9 +33,9 @@ class CsvWriter:
 
             csvSensorDataArray = {'timestamp': int(datetime.utcnow().timestamp())}
 
-            for sensorType, sensorData in sensorDataArray.items():
-                sensorData.pop("sensor", None) # Remove sensor type from data array
-                csvSensorDataArray.update(sensorData)
+            for sensorType, sd in sensorDataArray.items():
+                sd.pop("sensor", None) # Remove sensor type from data array
+                csvSensorDataArray.update(sd)
 
             self.logger.debug("CSV data dict {}".format(csvSensorDataArray))
 

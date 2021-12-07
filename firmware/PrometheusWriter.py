@@ -82,8 +82,8 @@ class PrometheusWriter:
                 uncompressed = writeRequest.SerializeToString()
                 compressed = snappy.compress(uncompressed)
 
-                username = self.configDict["username"]
-                password = self.configDict["password"]
+                username = self.configDict["instance"]
+                password = self.configDict["key"]
                 baseUrl = self.configDict["url"]
                 url = "https://{user}:{password}@{url}".format(user=username, password=password, url=baseUrl)
                 headers = {

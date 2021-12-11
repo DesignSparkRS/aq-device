@@ -13,15 +13,3 @@ broker = "localhost"
 basetopic = "airquality"
 username = ""
 password = ""
-
-[prometheus.private]
-instance = "232460"
-key = "eyJrIjoiOGUzZTQ0YzRjNzVlMDYyY2Y0YTk4MTNkMTA2NzhjNWFlOTY2M2VkMCIsIm4iOiJBQiBEdW1teSBTdGF0cyIsImlkIjo1NTUzMjZ9"
-url = "prometheus-prod-01-eu-west-0.grafana.net/api/prom/push"
-interval = 300           			# 5 minute push interval
-
-[prometheus.global]
-instance = ""
-key = ""
-url = "prometheus.aq.designspark.io/api/prom/push"
-interval = 600           			# 10 minute push interval

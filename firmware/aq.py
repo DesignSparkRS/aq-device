@@ -30,10 +30,12 @@ async def websocketPush(websocket, path):
         await asyncio.sleep(WEBSOCKET_UPDATE_INTERVAL)
 
 def main():
-    debugEnabled = getDebugConfig()
+    global configData
+    configData = getConfig()
+    debugEnabled = configData['ESDK']['debug']
 
     global mainboard
-    mainboard = MAIN.ModMAIN(debug=debugEnabled, configFile=configFile)
+    mainboard = MAIN.ModMAIN(debug=debugEnabled, config=configData)
     
     global logger
     logger = AppLogger.getLogger(__name__, debugEnabled)
@@ -43,9 +45,6 @@ def main():
     if hwid != -1:
         sensorData.update(hwid)
 
-    global mqtt
-    mqtt = MQTT.MQTT(debug=debugEnabled, configDict=mainboard.getMqttConfig(), hwid=hwid['hardwareId'])
-
     mainboard.createModules()
 
     logger.debug("Starting sensor update thread")
@@ -53,27 +52,34 @@ def main():
     sensorsUpdateThreadHandle.name = "sensorsUpdateThread"
     sensorsUpdateThreadHandle.start()
 
-    logger.debug("Starting MQTT update thread")
-    mqttUpdateThreadHandle = threading.Thread(target=mqttUpdateThread, args=(sensorData, ), daemon=True)
-    mqttUpdateThreadHandle.name = "mqttUpdateThread"
-    mqttUpdateThreadHandle.start()
+    global mqtt
+    mqttConfig = getMqttConfig()
 
-    if mainboard.getCsvEnabled():
+    if mqttConfig is not None:
+        mqtt = MQTT.MQTT(debug=debugEnabled, configDict=getMqttConfig(), hwid=hwid['hardwareId'])
+        logger.debug("Starting MQTT update thread")
+        mqttUpdateThreadHandle = threading.Thread(target=mqttUpdateThread, args=(sensorData, ), daemon=True)
+        mqttUpdateThreadHandle.name = "mqttUpdateThread"
+        mqttUpdateThreadHandle.start()
+
+    if getCsvEnabled():
         logger.debug("Starting CSV update thread")
         csvUpdateThreadHandle = threading.Thread(target=csvUpdateThread, args=(debugEnabled, sensorData, hwid, ), daemon=True)
         csvUpdateThreadHandle.name = "csvUpdateThread"
         csvUpdateThreadHandle.start()
 
-    prometheusThreads = list()
-    prometheusConfig = mainboard.getPrometheusConfig()
-    prometheusConfig.pop('friendlyname', None)
+    prometheusConfig = getPrometheusConfig()
 
-    for name, config in prometheusConfig.items():
-        logger.debug("Starting Prometheus update thread for config {}".format(name))
-        prometheusUpdateThreadHandle = threading.Thread(target=prometheusUpdateThread, args=(config, debugEnabled, sensorData, hwid['hardwareId']), daemon=True)
-        prometheusUpdateThreadHandle.name = "prometheusUpdateThread_{}".format(name)
-        prometheusThreads.append(prometheusUpdateThreadHandle)
-        prometheusUpdateThreadHandle.start()
+    if prometheusConfig is not None:
+        prometheusThreads = list()
+        prometheusConfig.pop('friendlyname', None)
+
+        for name, config in prometheusConfig.items():
+            logger.debug("Starting Prometheus update thread for config {}".format(name))
+            prometheusUpdateThreadHandle = threading.Thread(target=prometheusUpdateThread, args=(config, debugEnabled, sensorData, hwid['hardwareId']), daemon=True)
+            prometheusUpdateThreadHandle.name = "prometheusUpdateThread_{}".format(name)
+            prometheusThreads.append(prometheusUpdateThreadHandle)
+            prometheusUpdateThreadHandle.start()
 
     logger.debug("Starting asyncio websocket")
     asyncio.run(startWebsocket())
@@ -103,7 +109,7 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid):
     logger.debug("Started Prometheus update thread")
 
     localConfig = config
-    localConfig.update({'friendlyname': mainboard.getFriendlyName()})
+    localConfig.update({'friendlyname': getFriendlyName()})
     if int(localConfig['interval']) < 300:
         localConfig['interval'] = 300
 
@@ -115,17 +121,43 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid):
 
 def csvUpdateThread(debugEnabled, sensorData, hwid):
     logger.debug("Started CSV update thread")
-    csv = CsvWriter.CsvWriter(debug=debugEnabled, friendlyName=mainboard.getFriendlyName(), hwid=hwid['hardwareId'])
+    csv = CsvWriter.CsvWriter(debug=debugEnabled, friendlyName=getFriendlyName(), hwid=hwid['hardwareId'])
     while True:
         csv.addRow(sensorData)
         time.sleep(CSV_UPDATE_INTERVAL)
 
-def getDebugConfig():
-    """ Open configuration file to read debug information, then close """
+def getConfig():
+    """ Open configuration file to read config information, then close """
     with open(configFile) as fh:
-        configData = toml.loads(fh.read())
+        return toml.loads(fh.read())
 
-    return configData['ESDK']['debug']
+def getMqttConfig():
+    """ Return a dictionary containing MQTT config """
+    if 'mqtt' in configData:
+        return configData['mqtt']
+    else:
+        return None
+
+def getPrometheusConfig():
+    """ Return a dictionary containing Prometheus config, and friendly name """
+    configDict = {}
+    if 'prometheus' in configData:
+        configDict.update(configData['prometheus'])
+        configDict.update({"friendlyname": configData["ESDK"]["friendlyname"]})
+        return(configDict)
+    else:
+        return None
+
+def getFriendlyName():
+    """ Return the string of the device friendly name """
+    return configData['ESDK']['friendlyname']
+
+def getCsvEnabled():
+    """ Return CSV enabled value """
+    if configData['local']['csv'] is not None:
+        return configData['local']['csv']
+    else:
+        return False
 
 if __name__ == "__main__":
     main()

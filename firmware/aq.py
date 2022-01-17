@@ -12,6 +12,9 @@ import time
 import threading
 import logging
 import toml
+import subprocess
+import copy
+import geohash
 from DesignSpark.ESDK import MAIN, THV, CO2, PM2, AppLogger
 import PrometheusWriter, CsvWriter, MQTT
 
@@ -19,6 +22,7 @@ configFile='/boot/aq/aq.toml'
 debugEnabled = False
 
 sensorData = {}
+debugData = {}
 
 WEBSOCKET_UPDATE_INTERVAL = 5
 CSV_UPDATE_INTERVAL = 30
@@ -26,10 +30,16 @@ CSV_UPDATE_INTERVAL = 30
 async def websocketPush(websocket, path):
     logger.debug("Websocket connection from {}".format(websocket.remote_address))
     while True:
-        await websocket.send(json.dumps(sensorData, ensure_ascii=False))
+        localData = copy.deepcopy(sensorData)
+        localData.update({"debug": debugData})
+        await websocket.send(json.dumps(localData, ensure_ascii=False))
         await asyncio.sleep(WEBSOCKET_UPDATE_INTERVAL)
 
 def main():
+    global appGitCommit
+    appGitCommit = {"appVersion": getAppCommitHash()}
+    debugData.update(appGitCommit)
+
     global configData
     configData = getConfig()
     debugEnabled = configData['ESDK']['debug']
@@ -44,6 +54,8 @@ def main():
     hwid = mainboard.getSerialNumber()
     if hwid != -1:
         sensorData.update(hwid)
+
+    debugData.update(mainboard.getModuleVersion())
 
     mainboard.createModules()
 
@@ -96,7 +108,16 @@ def sensorsUpdateThread(sensorDataHandle):
     logger.debug("Started sensor update thread")
     while True:
         sensorDataHandle.update(mainboard.readAllModules())
-        sensorDataHandle.update(mainboard.getLocation())
+
+        try:
+            rawLocation = mainboard.getLocation()
+            sensorDataHandle.update({'geohash': geohash.encode(rawLocation['lat'], rawLocation['lon'])})
+        except Exception as e:
+            pass
+
+        debugData.update(mainboard.getUndervoltageStatus())
+        debugData.update(mainboard.getGPSStatus())
+
         time.sleep(1)
 
 def mqttUpdateThread(sensorData):
@@ -158,6 +179,11 @@ def getCsvEnabled():
         return configData['local']['csv']
     else:
         return False
+
+def getAppCommitHash() -> str:
+    """ Try get application git commit hash """
+    # Taken from https://stackoverflow.com/a/21901260
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
 
 if __name__ == "__main__":
     main()

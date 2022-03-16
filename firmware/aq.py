@@ -73,7 +73,10 @@ def main():
 
     debugData.update(mainboard.getModuleVersion())
 
+    # Give sensors some time to sort themselves out before attempting to read
+    time.sleep(0.05)
     mainboard.createModules()
+    time.sleep(0.05)
 
     logger.debug("Starting sensor update thread")
     sensorsUpdateThreadHandle = threading.Thread(target=sensorsUpdateThread, \

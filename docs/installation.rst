@@ -5,7 +5,7 @@ A pre-configured Micro SD card image is provided and presently the supported met
 
 Start by downloading the latest image:
 
-https://downloads.designspark.io/project/aq/aq-device/images/aq-device-LATEST.zip
+https://downloads.designspark.io/projects/aq-device/images/aq-device-LATEST.zip
 
 Following which this should be uncompressed and written out to a Micro SD card that is at least 8GB in size. 
 

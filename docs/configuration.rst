@@ -41,7 +41,7 @@ An example basic configuration::
    * - :code:`latitude` & :code:`longitude`
      - Geolocation a.k.a. "GPS position"
 
-The base config should be located within a section labelled :code:`[ESDK]` as shown in the example.
+The base config should be located within a section labelled :code:`[ESDK]` as shown in the above example.
 
 Try to pick something unique for the :code:`friendlyname`. This is not essential, but will be helpful in debugging any issues and when it comes to organising collaborative projects.
 

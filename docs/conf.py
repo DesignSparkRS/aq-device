@@ -31,6 +31,7 @@ author = 'DesignSpark'
 
 extensions = [
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
     "sphinx_rtd_theme"
 ]
 

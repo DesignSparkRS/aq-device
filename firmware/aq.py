@@ -26,6 +26,7 @@ debugData = {}
 
 WEBSOCKET_UPDATE_INTERVAL = 5
 CSV_UPDATE_INTERVAL = 30
+PROMETHEUS_MIN_UPDATE_INTERVAL = 120
 
 async def websocketPush(websocket, path):
     logger.debug("Websocket connection from {}".format(websocket.remote_address))
@@ -36,19 +37,34 @@ async def websocketPush(websocket, path):
         await asyncio.sleep(WEBSOCKET_UPDATE_INTERVAL)
 
 def main():
-    global appGitCommit
-    appGitCommit = {"appVersion": getAppCommitHash()}
-    debugData.update(appGitCommit)
-
     global configData
     configData = getConfig()
     debugEnabled = configData['ESDK']['debug']
 
-    global mainboard
-    mainboard = MAIN.ModMAIN(debug=debugEnabled, config=configData)
-    
+    # Check for logging level setup, default to full if non-existant configuration
+    if 'logging' in configData['ESDK']:
+        loggingConfig = configData['ESDK']['logging']
+    else:
+        loggingConfig = 'full'
+
     global logger
-    logger = AppLogger.getLogger(__name__, debugEnabled)
+    logger = AppLogger.getLogger(__name__, debugEnabled, loggingConfig)
+
+    global mainboard
+    mainboard = MAIN.ModMAIN(debug=debugEnabled, config=configData, \
+        loggingLevel=loggingConfig)
+
+    global appGitCommit
+    appGitCommit = {"appVersion": getAppCommitHash()}
+    debugData.update(appGitCommit)
+
+    # Give sensor string a restart
+    mainboard.setPower(vcc3=False, vcc5=False)
+    mainboard.setBuzzer(freq=20000)
+    time.sleep(0.5)
+    mainboard.setBuzzer(freq=0)
+    mainboard.setPower(vcc3=True, vcc5=True)
+    
     logger.info("Started main thread")
 
     hwid = mainboard.getSerialNumber()
@@ -57,46 +73,71 @@ def main():
 
     debugData.update(mainboard.getModuleVersion())
 
+    # Give sensors some time to sort themselves out before attempting to read
+    time.sleep(0.05)
     mainboard.createModules()
+    time.sleep(0.05)
 
     logger.debug("Starting sensor update thread")
-    sensorsUpdateThreadHandle = threading.Thread(target=sensorsUpdateThread, args=(sensorData, ), daemon=True)
+    sensorsUpdateThreadHandle = threading.Thread(target=sensorsUpdateThread, \
+        args=(sensorData, ), \
+        daemon=True)
     sensorsUpdateThreadHandle.name = "sensorsUpdateThread"
     sensorsUpdateThreadHandle.start()
 
     global mqtt
     mqttConfig = getMqttConfig()
 
+    # MQTT thread init
     if mqttConfig is not None:
-        mqtt = MQTT.MQTT(debug=debugEnabled, configDict=getMqttConfig(), hwid=hwid['hardwareId'])
+        mqtt = MQTT.MQTT(debug=debugEnabled, \
+            configDict=getMqttConfig(), \
+            hwid=hwid['hardwareId'], \
+            loggingLevel=loggingConfig)
+
         logger.debug("Starting MQTT update thread")
-        mqttUpdateThreadHandle = threading.Thread(target=mqttUpdateThread, args=(sensorData, ), daemon=True)
+        mqttUpdateThreadHandle = threading.Thread(target=mqttUpdateThread, \
+            args=(sensorData, ), \
+            daemon=True)
+
         mqttUpdateThreadHandle.name = "mqttUpdateThread"
         mqttUpdateThreadHandle.start()
 
+
+    # CSV thread init
     if getCsvEnabled():
         logger.debug("Starting CSV update thread")
-        csvUpdateThreadHandle = threading.Thread(target=csvUpdateThread, args=(debugEnabled, sensorData, hwid, ), daemon=True)
+        csvUpdateThreadHandle = threading.Thread(target=csvUpdateThread, \
+            args=(debugEnabled, sensorData, hwid, loggingConfig), \
+            daemon=True)
+
         csvUpdateThreadHandle.name = "csvUpdateThread"
         csvUpdateThreadHandle.start()
 
-    prometheusConfig = getPrometheusConfig()
 
+    # Prometheus threads init
+    prometheusConfig = getPrometheusConfig()
     if prometheusConfig is not None:
         prometheusThreads = list()
-        prometheusConfig.pop('friendlyname', None)
 
+        # Start thread for each configuration present
         for name, config in prometheusConfig.items():
             logger.debug("Starting Prometheus update thread for config {}".format(name))
-            prometheusUpdateThreadHandle = threading.Thread(target=prometheusUpdateThread, args=(config, debugEnabled, sensorData, hwid['hardwareId']), daemon=True)
+            prometheusUpdateThreadHandle = threading.Thread(target=prometheusUpdateThread, \
+                args=(config, debugEnabled, sensorData, hwid['hardwareId'], loggingConfig), \
+                daemon=True)
+
             prometheusUpdateThreadHandle.name = "prometheusUpdateThread_{}".format(name)
             prometheusThreads.append(prometheusUpdateThreadHandle)
             prometheusUpdateThreadHandle.start()
+
+        logger.debug("Started Prometheus threads: {}".format(prometheusThreads))
 
     logger.debug("Starting asyncio websocket")
     asyncio.run(startWebsocket())
 
     while True:
+        # Main thread loop
         pass
 
 async def startWebsocket():
@@ -126,23 +167,34 @@ def mqttUpdateThread(sensorData):
         mqtt.publishMessage(json.dumps(sensorData))
         time.sleep(WEBSOCKET_UPDATE_INTERVAL)
 
-def prometheusUpdateThread(config, debugEnabled, sensorData, hwid):
+def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel):
     logger.debug("Started Prometheus update thread")
 
     localConfig = config
     localConfig.update({'friendlyname': getFriendlyName()})
-    if int(localConfig['interval']) < 300:
-        localConfig['interval'] = 300
 
-    writer = PrometheusWriter.PrometheusWriter(configDict=localConfig, debug=debugEnabled, hwid=hwid)
+    # Enforce a mininmum logging interval
+    if int(localConfig['interval']) < PROMETHEUS_MIN_UPDATE_INTERVAL:
+        localConfig['interval'] = PROMETHEUS_MIN_UPDATE_INTERVAL
+
+    writer = PrometheusWriter.PrometheusWriter(configDict=localConfig, \
+        debug=debugEnabled, \
+        hwid=hwid, \
+        loggingLevel=loggingLevel, \
+        additionalLabels=configData['ESDK']) # 'ESDK' dictionary should contain any additional labels
+                                             # pulled from the config file
     logger.debug("Update interval {}s".format(localConfig['interval']))
+
     while True:
         writer.writeData(sensorData)
         time.sleep(localConfig['interval'])
 
-def csvUpdateThread(debugEnabled, sensorData, hwid):
+def csvUpdateThread(debugEnabled, sensorData, hwid, loggingLevel):
     logger.debug("Started CSV update thread")
-    csv = CsvWriter.CsvWriter(debug=debugEnabled, friendlyName=getFriendlyName(), hwid=hwid['hardwareId'])
+    csv = CsvWriter.CsvWriter(debug=debugEnabled, \
+        friendlyName=getFriendlyName(), \
+        hwid=hwid['hardwareId'], \
+        loggingLevel=loggingLevel)
     while True:
         csv.addRow(sensorData)
         time.sleep(CSV_UPDATE_INTERVAL)
@@ -161,11 +213,8 @@ def getMqttConfig():
 
 def getPrometheusConfig():
     """ Return a dictionary containing Prometheus config, and friendly name """
-    configDict = {}
     if 'prometheus' in configData:
-        configDict.update(configData['prometheus'])
-        configDict.update({"friendlyname": configData["ESDK"]["friendlyname"]})
-        return(configDict)
+        return(configData['prometheus'])
     else:
         return None
 
@@ -183,7 +232,11 @@ def getCsvEnabled():
 def getAppCommitHash() -> str:
     """ Try get application git commit hash """
     # Taken from https://stackoverflow.com/a/21901260
-    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+    try:
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+    except Exception as e:
+        logger.error("Could not determine Git hash! Reason {}".format(e))
+        return ""
 
 if __name__ == "__main__":
     main()

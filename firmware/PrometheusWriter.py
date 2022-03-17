@@ -11,15 +11,27 @@ import snappy
 import prometheus_pb2
 #from prometheus_pb2 import TimeSeries, Label, Labels, Sample, WriteRequest
 from datetime import datetime
+from urllib.parse import urlparse
 import calendar
 import copy
 
 class PrometheusWriter:
-    def __init__(self, configDict, debug=False, hwid=0):
-        self.logger = AppLogger.getLogger(__name__, debug)
+    def __init__(self, configDict, debug=False, hwid=0, loggingLevel='full', additionalLabels={}):
+        self.logger = AppLogger.getLogger(__name__, debug, loggingLevel)
         self.configDict = configDict
         self.hardwareId = hwid
         self.friendlyName = configDict["friendlyname"]
+
+        # Add additional Prometheus labels from dictionary, if dictionary is not empty
+        if additionalLabels:
+            if "location" in additionalLabels:
+                self.locationLabel = additionalLabels["location"]
+
+            if "project" in additionalLabels:
+                self.projectLabel = additionalLabels["project"]
+
+            if "tag" in additionalLabels:
+                self.tagLabel = additionalLabels["tag"]
 
     def __dt2ts(self, dt):
         """Converts a datetime object to UTC timestamp
@@ -74,6 +86,31 @@ class PrometheusWriter:
                         label.name = "sensor"
                         label.value = sensorType
 
+                        # Attempt to add additional labels if they exist
+                        try:
+                            label = series.labels.add()
+                            label.name = "location"
+                            label.value = self.locationLabel
+                        except AttributeError:
+                            # self.locationLabel doesn't exist, don't add to Prometheus
+                            pass
+
+                        try:
+                            label = series.labels.add()
+                            label.name = "project"
+                            label.value = self.projectLabel
+                        except AttributeError:
+                            # self.projectLabel doesn't exist, don't add to Prometheus
+                            pass
+
+                        try:
+                            label = series.labels.add()
+                            label.name = "tag"
+                            label.value = self.tagLabel
+                        except AttributeError:
+                            # self.tagLabel doesn't exist, don't add to Prometheus
+                            pass
+
                         # Add metric value
                         sample = series.samples.add()
                         sample.value = value
@@ -85,7 +122,15 @@ class PrometheusWriter:
                 username = self.configDict["instance"]
                 password = self.configDict["key"]
                 baseUrl = self.configDict["url"]
-                url = "https://{user}:{password}@{url}".format(user=username, password=password, url=baseUrl)
+                splitUrl = urlparse(baseUrl)
+
+                # Rebuild URL
+                url = "{scheme}://{user}:{password}@{url}{path}".format(scheme=splitUrl.scheme, \
+                    user=username, \
+                    password=password, \
+                    url=splitUrl.netloc, \
+                    path=splitUrl.path)
+
                 headers = {
                     "Content-Encoding": "snappy",
                     "Content-Type": "application/x-protobuf",
@@ -95,9 +140,11 @@ class PrometheusWriter:
 
                 try:
                     response = requests.post(url, headers=headers, data=compressed)
-                    self.logger.debug("POSTed Prometheus data, response code {}".format(response.status_code))
-                    if response.status_code != 200:
-                        self.logger.error("Error posting Prometheus data, reponse {}".format(response.text))
+                    # Check for valid success code (not using response.ok as this includes 2xx and 3xx codes)
+                    if 200 <= response.status_code <= 299:
+                        self.logger.debug("Successfully posted Prometheus data, reponse {}".format(response.text))
+                    else:
+                        self.logger.error("Failed posting Prometheus data! Status code {}, response {}".format(response.status_code, response.text))
                 except Exception as e:
                     self.logger.error("Could not post Prometheus data, reason {}".format(e))
             

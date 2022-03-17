@@ -9,8 +9,8 @@ from DesignSpark.ESDK import AppLogger
 from paho.mqtt import client
 
 class MQTT:
-	def __init__(self, configDict, debug=False, hwid=0):
-		self.logger = AppLogger.getLogger(__name__, debug)
+	def __init__(self, configDict, debug=False, hwid=0, loggingLevel='full'):
+		self.logger = AppLogger.getLogger(__name__, debug, loggingLevel)
 		self.configDict = configDict
 		self.hardwareId = hwid
 

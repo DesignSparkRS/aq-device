@@ -35,6 +35,13 @@ extensions = [
     "sphinx_rtd_theme"
 ]
 
+# Configuration for intersphinx mapping
+
+intersphinx_mapping = {
+    # Links to the main DesignSpark Docs project.
+    'dsdocs': ('https://docs.designspark.io/en/latest/', None),
+}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

@@ -22,7 +22,7 @@ The Raspberry Pi should be properly shut down before removing power. This can be
 Restarting
 **********
 
-If the device needs to be restarted, e.g. after making configuration changes, the follow procedure should be followed:
+If the device needs to be restarted, e.g. after making configuration changes, the following procedure should be used:
 
 #. Shut down
 #. Remove power
@@ -37,6 +37,8 @@ MQTT
 MQTT functionality can be tested by connecting via SSH and entering at the command prompt::
 
     mosquitto_sub -h localhost -t '#'
+
+Or Alternatively using an MQTT client on another computer and connecting to host :code:`airquality.local`.
 
 Sensor readings should be printed out every 5 seconds.
 
@@ -67,8 +69,9 @@ The most common problems are likely to be:
 
 * **Missing readings:**
     * Sensor chain not properly connected.
+    * Faulty/damaged sensor module.
 * **Application won't start:**
     * Micro SD card full (delete CSV logs and/or application log files).
     * Configuration file errors (check for typos and correct use of quotes etc.)
-* **Crashes / poor reliability:**
-    * Bad power supply. 
+* **Crashes, hangs, unreliability:**
+    * Bad power supply. It is strongly recommended to use the provided official Raspberry Pi PSU!

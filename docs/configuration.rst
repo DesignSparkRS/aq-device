@@ -6,6 +6,8 @@ There are two options for configuration:
 #. Insert the Micro SD card into another computer and use this to edit the config.
 #. Insert the Micro SD card into the Raspberry Pi, boot and then edit the config via an SSH connection.
 
+The hostname is set to :code:`airquality` and since mDNS is configured, it should be possible to connect via SSH using :code:`airquality.local`.
+
 The username and password are set to the Raspberry Pi OS defaults of :code:`pi` and :code:`raspberry`.
 
 .. note::
@@ -45,7 +47,7 @@ The base config should be located within a section labelled :code:`[ESDK]` as sh
 
 Try to pick something unique for the :code:`friendlyname`. This is not essential, but will be helpful in debugging any issues and when it comes to organising collaborative projects.
 
-The :code:`location` should be set to e.g. "kitchen" or "livingroom" etc. A taxonomy has been created and for details, see the Air Quality Project Taxonomy. Please be sure to pick a location from this list, so as to avoid having multiple different labels in use for the same location, which will be important when it comes to interpreting data.
+The :code:`location` should be set to e.g. "kitchen" or "livingroom" etc. A taxonomy has been created and for details, see the :doc:`Air Quality Project Taxonomy <dsdocs:aq/taxonomy>`. Please be sure to pick a location from this list, so as to avoid having multiple different labels in use for the same location, which will be important when it comes to interpreting data.
 
 The :code:`latitude` and :code:`longitude` should be set according to the geolocation. While there are no plans to show data from individual sensors at private residences in public dashboards, you may still decide that you are not comfortable with disclosing your precise location. In which case it is suggested to use the coordinates for the end of the street or perhaps the nearest town. However, it is important that the configured and actual location are not too far apart, otherwise this may compromise the usefulness of data gathered.
 
@@ -71,7 +73,7 @@ Example config for optional parameters::
    * - :code:`project`
      - Identifier for a collaborative project
 
-The :code:`tag` parameter can be used to help distinguish data when configured to publish to a cloud platform. For example, you may wish to create a visualisation which shows measurements for sensors in heated vs. unheated rooms. If unsure, don't set this and it can always be configured later.
+The :code:`tag` parameter can be used to help distinguish data published to a cloud platform. For example, you may wish to create a visualisation which groups measurements for sensors in heated vs. unheated rooms. If unsure, don't set this and it can always be configured later.
 
 The :code:`project` parameter is used to identify devices which belong to a particular DesignSpark Air Quality collaborative project. **This should not be set unless instructed to do so.**
 
@@ -83,7 +85,7 @@ If configured, the values for :code:`tag` and :code:`project` will be set as add
 GPS
 ===
 
-The ESDK Main board contains a GPS receiver, but this is not used by default and instead sensor measurements are labelled with the geolocation set in the configuration file. The GPS receiver can be enabled with the following setting in the :code:`[ESDK]` section of the configuration file::
+The ESDK Main board contains a GPS receiver, but this is not used by default and instead sensor measurements are labelled with the geolocation set in the configuration file. The GPS receiver can be enabled with the following setting in the :code:`[ESDK]` section::
 
     gps = true
 

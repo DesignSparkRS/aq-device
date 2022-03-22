@@ -15,6 +15,7 @@ import toml
 import subprocess
 import copy
 import geohash
+import re
 from DesignSpark.ESDK import MAIN, THV, CO2, PM2, AppLogger
 import PrometheusWriter, CsvWriter, MQTT
 
@@ -40,20 +41,13 @@ def main():
     global configData
     configData = getConfig()
 
-    # Check for debug configuration, default to disabled debug if config missing#
-    if 'debug' in configData['ESDK']:
-        debugEnabled = configData['ESDK']['debug']
-    else:
-        logger.warning("Missing [ESDK] 'debug' key, defaulting to no debug output")
-        debugEnabled = False
-
     # Check for logging level setup, default to full if non-existant configuration
     if 'logging' in configData['ESDK']:
         loggingConfig = configData['ESDK']['logging']
     else:
-        logger.warning("Missing [ESDK] 'logging' key, defaulting to full logging. Set key to 'off' to disable")
         loggingConfig = 'full'
 
+    debugEnabled = getDebugConfig()
     global logger
     logger = AppLogger.getLogger(__name__, debugEnabled, loggingConfig)
 
@@ -210,51 +204,85 @@ def csvUpdateThread(debugEnabled, sensorData, hwid, loggingLevel):
         csv.addRow(sensorData)
         time.sleep(CSV_UPDATE_INTERVAL)
 
+def getDebugConfig():
+    """ Return debugging configuration """
+    with open(configFile) as fh:
+        config = toml.loads(fh.read())
+        try:
+            return config['ESDK']['debug']
+        except Exception as e:
+            print("Could not read [ESDK] 'debug' key, defaulting to no debug output")
+            return False
+
 def getConfig():
     """ Open configuration file to read config information, then close """
+
+    # Initialise temporary logger for use here
+    # Necessary as the AppLogger isn't created yet
+    config_logger = logging.getLogger('config_checker')
+    config_logger.setLevel(logging.DEBUG)
+    sh = logging.StreamHandler()
+    logger_formatter = logging.Formatter('%(name)s [%(levelname)s]: %(message)s')
+    sh.setFormatter(logger_formatter)
+    config_logger.addHandler(sh)
+
     with open(configFile) as fh:
         config = toml.loads(fh.read())
 
+        # Regex to sanitise some inputs
+        string_strip = re.compile("[\w\d_]")
+
         # Mandatory config key checking
-        if 'esdk' in config:
+        if 'ESDK' in config:
             if 'friendlyname' not in config['ESDK']:
-                logger.error("Missing [ESDK] 'friendlyname' key!")
+                config_logger.error("Missing [ESDK] 'friendlyname' key!")
+            else:
+                # Remove anything other than A-Z, a-z, 0-9 and _
+                config['ESDK']['friendlyname'] = string_strip.sub('', config['ESDK']['friendlyname'])
             if 'location' not in config['ESDK']:
-                logger.error("Missing [ESDK] 'location' key!")
+                config_logger.error("Missing [ESDK] 'location' key!")
             if 'latitude' not in config['ESDK']:
-                logger.error("Missing [ESDK] 'latitude' key!")
+                config_logger.error("Missing [ESDK] 'latitude' key!")
             if 'longitude' not in config['ESDK']:
-                logger.error("Missing [ESDK] 'longitude' key!")
+                config_logger.error("Missing [ESDK] 'longitude' key!")
+
+            # Optional Prometheus label sanitising
+            if 'location' in config['ESDK']:
+                config['ESDK']['location'] = string_strip.sub('', config['ESDK']['location'])
+            if 'project' in config['ESDK']:
+                config['ESDK']['project'] = string_strip.sub('', config['ESDK']['project'])
+            if 'tag' in config['ESDK']:
+                config['ESDK']['tag'] = string_strip.sub('', config['ESDK']['tag'])
         else:
-            logger.error("Missing [ESDK] configuration section!")
+            config_logger.error("Missing [ESDK] configuration section!")
 
         # Optional config key checking
         if 'local' not in config:
-            logger.warning("Missing optional [local] configuration section")
+            config_logger.warning("Optional [local] configuration section not provided")
         if 'mqtt' not in config:
-            logger.warning("Missing optional [mqtt] configuration section")
+            config_logger.warning("Optional [mqtt] configuration section not provided")
         else:
             if 'broker' not in config['mqtt']:
-                logger.error("Missing [mqtt] 'broker' key!")
+                config_logger.error("Missing [mqtt] 'broker' key!")
             if 'basetopic' not in config['mqtt']:
-                logger.error("Missing [mqtt] 'basetopic' key!")
+                config_logger.error("Missing [mqtt] 'basetopic' key!")
             if 'username' not in config['mqtt']:
-                logger.error("Missing [mqtt] 'username' key! Set to empty string if not needed")
+                config_logger.error("Missing [mqtt] 'username' key! Set to empty string if not needed")
             if 'password' not in config['mqtt']:
-                logger.error("Missing [mqtt] 'password' key! Set to empty string if not needed")
+                config_logger.error("Missing [mqtt] 'password' key! Set to empty string if not needed")
         if 'prometheus' not in config:
-            logger.warning("Missing optional [prometheus] configuration section")
+            config_logger.warning("Optional [prometheus] configuration section not provided")
         else:
             # Prometheus enabled, check for configuration value presence
-            for configsection in config['prometheus']:
-                if 'instance' not in configsection:
-                    logger.error("Missing [prometheus] 'instance' key!")
-                if 'key' not in configsection:
-                    logger.error("Missing [prometheus] 'key' key!")
-                if 'url' not in configsection:
-                    logger.error("Missing [prometheus] 'url' key!")
-                if 'interval' not in configsection:
-                    logger.warning("Missing [prometheus] 'interval' key")
+            for config_name, config_section in config['prometheus'].items():
+                if 'instance' not in config_section:
+                    config_logger.error("Missing [prometheus.{name}] 'instance' key!".format(name=config_name))
+                if 'key' not in config_section:
+                    config_logger.error("Missing [prometheus.{name}] 'key' key!".format(name=config_name))
+                if 'url' not in config_section:
+                    config_logger.error("Missing [prometheus.{name}] 'url' key!".format(name=config_name))
+                if 'interval' not in config_section:
+                    config_logger.warning("Missing [prometheus.{name}] 'interval' key".format(name=config_name))
 
         return config
 
@@ -282,7 +310,7 @@ def getFriendlyName():
 def getCsvEnabled():
     """ Return CSV enabled value """
     if 'local' in configData:
-        if csv in configData['local']:
+        if 'csv' in configData['local']:
             return configData['local']['csv']
         else:
             logger.warning("Missing [local] 'csv' key, defaulting to no CSV logging")

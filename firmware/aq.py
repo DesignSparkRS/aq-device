@@ -39,12 +39,19 @@ async def websocketPush(websocket, path):
 def main():
     global configData
     configData = getConfig()
-    debugEnabled = configData['ESDK']['debug']
+
+    # Check for debug configuration, default to disabled debug if config missing#
+    if 'debug' in configData['ESDK']:
+        debugEnabled = configData['ESDK']['debug']
+    else:
+        logger.warning("Missing [ESDK] 'debug' key, defaulting to no debug output")
+        debugEnabled = False
 
     # Check for logging level setup, default to full if non-existant configuration
     if 'logging' in configData['ESDK']:
         loggingConfig = configData['ESDK']['logging']
     else:
+        logger.warning("Missing [ESDK] 'logging' key, defaulting to full logging. Set key to 'off' to disable")
         loggingConfig = 'full'
 
     global logger
@@ -174,7 +181,12 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel)
     localConfig.update({'friendlyname': getFriendlyName()})
 
     # Enforce a mininmum logging interval
-    if int(localConfig['interval']) < PROMETHEUS_MIN_UPDATE_INTERVAL:
+    if interval in localConfig:
+        if int(localConfig['interval']) < PROMETHEUS_MIN_UPDATE_INTERVAL:
+            logger.warning("Minimum Prometheus logging interval of {}s enforced".format(PROMETHEUS_MIN_UPDATE_INTERVAL))
+            localConfig['interval'] = PROMETHEUS_MIN_UPDATE_INTERVAL
+    else:
+        logger.warning("No Prometheus interval specified, enforcing miniumum of {}s".format(PROMETHEUS_MIN_UPDATE_INTERVAL))
         localConfig['interval'] = PROMETHEUS_MIN_UPDATE_INTERVAL
 
     writer = PrometheusWriter.PrometheusWriter(configDict=localConfig, \
@@ -183,7 +195,6 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel)
         loggingLevel=loggingLevel, \
         additionalLabels=configData['ESDK']) # 'ESDK' dictionary should contain any additional labels
                                              # pulled from the config file
-    logger.debug("Update interval {}s".format(localConfig['interval']))
 
     while True:
         writer.writeData(sensorData)
@@ -202,7 +213,50 @@ def csvUpdateThread(debugEnabled, sensorData, hwid, loggingLevel):
 def getConfig():
     """ Open configuration file to read config information, then close """
     with open(configFile) as fh:
-        return toml.loads(fh.read())
+        config = toml.loads(fh.read())
+
+        # Mandatory config key checking
+        if 'esdk' in config:
+            if 'friendlyname' not in config['ESDK']:
+                logger.error("Missing [ESDK] 'friendlyname' key!")
+            if 'location' not in config['ESDK']:
+                logger.error("Missing [ESDK] 'location' key!")
+            if 'latitude' not in config['ESDK']:
+                logger.error("Missing [ESDK] 'latitude' key!")
+            if 'longitude' not in config['ESDK']:
+                logger.error("Missing [ESDK] 'longitude' key!")
+        else:
+            logger.error("Missing [ESDK] configuration section!")
+
+        # Optional config key checking
+        if 'local' not in config:
+            logger.warning("Missing optional [local] configuration section")
+        if 'mqtt' not in config:
+            logger.warning("Missing optional [mqtt] configuration section")
+        else:
+            if 'broker' not in config['mqtt']:
+                logger.error("Missing [mqtt] 'broker' key!")
+            if 'basetopic' not in config['mqtt']:
+                logger.error("Missing [mqtt] 'basetopic' key!")
+            if 'username' not in config['mqtt']:
+                logger.error("Missing [mqtt] 'username' key! Set to empty string if not needed")
+            if 'password' not in config['mqtt']:
+                logger.error("Missing [mqtt] 'password' key! Set to empty string if not needed")
+        if 'prometheus' not in config:
+            logger.warning("Missing optional [prometheus] configuration section")
+        else:
+            # Prometheus enabled, check for configuration value presence
+            for configsection in config['prometheus']:
+                if 'instance' not in configsection:
+                    logger.error("Missing [prometheus] 'instance' key!")
+                if 'key' not in configsection:
+                    logger.error("Missing [prometheus] 'key' key!")
+                if 'url' not in configsection:
+                    logger.error("Missing [prometheus] 'url' key!")
+                if 'interval' not in configsection:
+                    logger.warning("Missing [prometheus] 'interval' key")
+
+        return config
 
 def getMqttConfig():
     """ Return a dictionary containing MQTT config """
@@ -220,12 +274,19 @@ def getPrometheusConfig():
 
 def getFriendlyName():
     """ Return the string of the device friendly name """
-    return configData['ESDK']['friendlyname']
+    if 'friendlyname' in configData['ESDK']:
+        return configData['ESDK']['friendlyname']
+    else:
+        return ""
 
 def getCsvEnabled():
     """ Return CSV enabled value """
-    if configData['local']['csv'] is not None:
-        return configData['local']['csv']
+    if 'local' in configData:
+        if csv in configData['local']:
+            return configData['local']['csv']
+        else:
+            logger.warning("Missing [local] 'csv' key, defaulting to no CSV logging")
+            return False
     else:
         return False
 

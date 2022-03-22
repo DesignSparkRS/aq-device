@@ -29,6 +29,7 @@ An example basic configuration::
     location = "workshop"
     latitude = 53.7130128
     longitude = -1.9391832
+    debug = false
 
 .. list-table:: Mandatory parameters
    :widths: auto

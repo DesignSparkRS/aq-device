@@ -45,7 +45,7 @@
             height: 100%;
         }
 
-        #temperatureChart {
+        #temperatureChart, #VOCChart, #CO2Chart {
             display: none;
         }
     </style>
@@ -57,6 +57,7 @@
         var tempData = [];
         var humidityData = [];
         var VOCData = [];
+        var CO2Data = [];
 
         let socket = new WebSocket("ws://airquality:8765");
 
@@ -94,6 +95,7 @@
             if(dataObj.hasOwnProperty('co2')) {
                 $("#co2Text").html(dataObj['co2']['co2']);
                 $("#co2Metric").css('background-color', co2ColourScale(dataObj['co2']['co2']).hex());
+                CO2Data.push({'x': time, 'y': dataObj['co2']['co2']});
             } else {
                 $("#co2Text").html("--");
                 $("#co2Metric").css('background-color', '#bbb');
@@ -111,7 +113,7 @@
                 $("#pm10Text").html('--');
             }
 
-            updateCharts(tempData, humidityData, VOCData);
+            updateCharts(tempData, humidityData, VOCData, CO2Data);
         }
     </script>
 
@@ -128,7 +130,7 @@
             <h5>VOC</h5>
             <h1 id="vocText"></h1>
         </div>
-        <div class="metric" id="co2Metric">
+        <div onclick="$('#summary').hide(0); showCO2Chart(CO2Data);" class="metric" id="co2Metric">
             <h5>CO<sub>2</sub></h5>
             <h1><span id="co2Text"></span><small>ppm</small></h1>
         </div>
@@ -141,6 +143,7 @@
     </div>
     <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); $('#summary').fadeIn(250);"></canvas>
     <canvas id='VOCChart' width='320' height='240' onclick="$('#VOCChart').hide(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='CO2Chart' width='320' height='240' onclick="$('#CO2Chart').hide(); $('#summary').fadeIn(250);"></canvas>
     <!-- Leave this at the bottom -->
     <script src="bootstrap.bundle.min.js"></script>
 </body>

@@ -1,5 +1,6 @@
 var tempChart = null;
 var VOCChart = null;
+var CO2Chart = null;
 
 function updateCharts(tempData, humidityData, VOCData) {
     if (tempChart !== null) {
@@ -10,6 +11,10 @@ function updateCharts(tempData, humidityData, VOCData) {
     if (VOCChart !== null) {
         VOCChart.data.datasets[0].data = VOCData;
         VOCChart.update();
+    }
+    if (CO2Chart !== null) {
+        CO2Chart.data.datasets[0].data = CO2Data;
+        CO2Chart.update();
     }
 }
 
@@ -54,6 +59,22 @@ function showVOCChart(VOCData) {
     VOCChart = createChart($("#VOCChart"), datasets);
 }
 
+function showCO2Chart(CO2Data) {
+    if (CO2Chart !== null) {
+        CO2Chart.destroy();
+    }
+    var datasets = [
+        {
+            label: 'CO2',
+            data: CO2Data,
+            borderColor: '#3d426b',
+            backgroundColor: '#3d426b',
+            pointRadius: 0
+        }
+    ]
+
+    CO2Chart = createChart($("#CO2Chart"), datasets);
+}
 
 function createChart(chartElem, ds) {
     return new Chart($(chartElem), {

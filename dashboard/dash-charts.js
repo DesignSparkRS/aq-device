@@ -4,20 +4,20 @@ var CO2Chart = null;
 var PMChart = null;
 
 function updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data) {
-    if (tempChart !== null) {
+    if (tempChart !== null && tempChart.ctx !== null) {
         tempChart.data.datasets[0].data = tempData;
         tempChart.data.datasets[1].data = humidityData;
         tempChart.update();
     }
-    if (VOCChart !== null) {
+    if (VOCChart !== null && VOCChart.ctx !== null) {
         VOCChart.data.datasets[0].data = VOCData;
         VOCChart.update();
     }
-    if (CO2Chart !== null) {
+    if (CO2Chart !== null && CO2Chart.ctx !== null) {
         CO2Chart.data.datasets[0].data = CO2Data;
         CO2Chart.update();
     }
-    if (PMChart !== null) {
+    if (PMChart !== null && PMChart.ctx !== null) {
         PMChart.data.datasets[0].data = PM1Data;
         PMChart.data.datasets[1].data = PM25Data;
         PMChart.data.datasets[2].data = PM4Data;
@@ -27,9 +27,6 @@ function updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Dat
 }
 
 function showTempChart(tempData, humidityData) {
-    if (tempChart !== null) {
-        tempChart.destroy();
-    }
     var datasets = [
         {
             label: 'Temperature (°C)',
@@ -51,9 +48,6 @@ function showTempChart(tempData, humidityData) {
 }
 
 function showVOCChart(VOCData) {
-    if (VOCChart !== null) {
-        VOCChart.destroy();
-    }
     var datasets = [
         {
             label: 'Volatile Organic Compounds',
@@ -68,9 +62,6 @@ function showVOCChart(VOCData) {
 }
 
 function showCO2Chart(CO2Data) {
-    if (CO2Chart !== null) {
-        CO2Chart.destroy();
-    }
     var datasets = [
         {
             label: 'CO2',
@@ -85,9 +76,6 @@ function showCO2Chart(CO2Data) {
 }
 
 function showPMChart(PM1Data, PM25Data, PM4Data, PM10Data) {
-    if (PMChart !== null) {
-        PMChart.destroy();
-    }
     var datasets = [
         {
             label: 'PM 1.0',

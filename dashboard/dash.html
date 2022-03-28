@@ -152,10 +152,10 @@
             <h5><small>PM10</small> <span id="pm10Text"></span></h5>
         </div>
     </div>
-    <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); $('#summary').fadeIn(250);"></canvas>
-    <canvas id='VOCChart' width='320' height='240' onclick="$('#VOCChart').hide(); $('#summary').fadeIn(250);"></canvas>
-    <canvas id='CO2Chart' width='320' height='240' onclick="$('#CO2Chart').hide(); $('#summary').fadeIn(250);"></canvas>
-    <canvas id='PMChart' width='320' height='240' onclick="$('#PMChart').hide(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); tempChart.destroy(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='VOCChart' width='320' height='240' onclick="$('#VOCChart').hide(); VOCChart.destroy(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='CO2Chart' width='320' height='240' onclick="$('#CO2Chart').hide(); CO2Chart.destroy(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='PMChart' width='320' height='240' onclick="$('#PMChart').hide(); PMChart.destroy(); $('#summary').fadeIn(250);"></canvas>
     <!-- Leave this at the bottom -->
     <script src="bootstrap.bundle.min.js"></script>
 </body>

@@ -8,6 +8,7 @@
     <link href="bootstrap.min.css" rel="stylesheet">
 
     <script src="chroma.min.js"></script>
+    <script src="jquery.min.js"></script>
 
     <style>
         * {
@@ -39,39 +40,39 @@
             dataObj = JSON.parse(event.data);
 
             if(dataObj.hasOwnProperty('hardwareId')) {
-                document.getElementById("hwid").innerHTML = dataObj['hardwareId'];
+                $("#hwid").html(dataObj['hardwareId']);
             }
 
             if(dataObj.hasOwnProperty('geohash')) {
-                document.getElementById("geohash").innerHTML = dataObj['geohash'];
+                $("#geohash").html(dataObj['geohash']);
             }
             
             debugData = dataObj['debug']
             
             if(debugData.hasOwnProperty('appVersion')) {
-                document.getElementById("appVersion").innerHTML =debugData['appVersion'];
+                $("#appVersion").html(debugData['appVersion']);
             }
 
             if(debugData.hasOwnProperty('moduleVersion')) {
-                document.getElementById("moduleVersion").innerHTML = debugData['moduleVersion'];
+                $("#moduleVersion").html(debugData['moduleVersion']);
             }
 
             if(debugData.hasOwnProperty('throttle_state')) {
                 throttleData = debugData['throttle_state'];
-                document.getElementById("throttleState").innerHTML = throttleData['code'];
+                $("#throttleState").html(throttleData['code']);
                 if(throttleData.hasOwnProperty('status_strings')) {
-                    document.getElementById("throttleStrings").innerHTML = throttleData['status_strings'];
+                    $("#throttleStrings").html(throttleData['status_strings']);
                 }
             }
 
             if(debugData.hasOwnProperty('gpsStatus')) {
                 gpsData = debugData['gpsStatus'];
                 if(gpsData.hasOwnProperty('mode')) {
-                    document.getElementById("gpsMode").innerHTML = gpsData['mode'];
+                    $("#gpsMode").html(gpsData['mode']);
                 }
 
                 if(gpsData.hasOwnProperty('satellitesUsed')) {
-                    document.getElementById("gpsSatellites").innerHTML = gpsData['satellitesUsed'];
+                    $("#gpsSatellites").html(gpsData['satellitesUsed']);
                 }
             }
         }

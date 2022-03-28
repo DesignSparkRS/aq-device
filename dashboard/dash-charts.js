@@ -1,8 +1,9 @@
 var tempChart = null;
 var VOCChart = null;
 var CO2Chart = null;
+var PMChart = null;
 
-function updateCharts(tempData, humidityData, VOCData) {
+function updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data) {
     if (tempChart !== null) {
         tempChart.data.datasets[0].data = tempData;
         tempChart.data.datasets[1].data = humidityData;
@@ -15,6 +16,13 @@ function updateCharts(tempData, humidityData, VOCData) {
     if (CO2Chart !== null) {
         CO2Chart.data.datasets[0].data = CO2Data;
         CO2Chart.update();
+    }
+    if (PMChart !== null) {
+        PMChart.data.datasets[0].data = PM1Data;
+        PMChart.data.datasets[1].data = PM25Data;
+        PMChart.data.datasets[2].data = PM4Data;
+        PMChart.data.datasets[3].data = PM10Data;
+        PMChart.update();
     }
 }
 
@@ -74,6 +82,44 @@ function showCO2Chart(CO2Data) {
     ]
 
     CO2Chart = createChart($("#CO2Chart"), datasets);
+}
+
+function showPMChart(PM1Data, PM25Data, PM4Data, PM10Data) {
+    if (PMChart !== null) {
+        PMChart.destroy();
+    }
+    var datasets = [
+        {
+            label: 'PM 1.0',
+            data: PM1Data,
+            borderColor: '#22eaaa',
+            backgroundColor: '#22eaaa',
+            pointRadius: 0
+        },
+        {
+            label: 'PM 2.5',
+            data: PM25Data,
+            borderColor: '#ffb174',
+            backgroundColor: '#ffb174',
+            pointRadius: 0
+        },
+        {
+            label: 'PM 4.0',
+            data: PM4Data,
+            borderColor: '#ee5a5a',
+            backgroundColor: '#ee5a5a',
+            pointRadius: 0
+        },
+        {
+            label: 'PM 10',
+            data: PM10Data,
+            borderColor: '#b31e6f',
+            backgroundColor: '#b31e6f',
+            pointRadius: 0
+        }
+    ]
+
+    PMChart = createChart($("#PMChart"), datasets);
 }
 
 function createChart(chartElem, ds) {

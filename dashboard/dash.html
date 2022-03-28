@@ -58,6 +58,10 @@
         var humidityData = [];
         var VOCData = [];
         var CO2Data = [];
+        var PM1Data = [];
+        var PM25Data = [];
+        var PM4Data = [];
+        var PM10Data = [];
 
         let socket = new WebSocket("ws://airquality:8765");
 
@@ -106,6 +110,10 @@
                 $("#pm25Text").html(dataObj['pm']['pm2.5']);
                 $("#pm4Text").html(dataObj['pm']['pm4.0']);
                 $("#pm10Text").html(dataObj['pm']['pm10']);
+                PM1Data.push({'x': time, 'y': dataObj['pm']['pm1.0']});
+                PM25Data.push({'x': time, 'y': dataObj['pm']['pm2.5']});
+                PM4Data.push({'x': time, 'y': dataObj['pm']['pm4.0']});
+                PM10Data.push({'x': time, 'y': dataObj['pm']['pm10']});
             } else {
                 $("#pm1Text").html('--');
                 $("#pm25Text").html('--');
@@ -113,7 +121,7 @@
                 $("#pm10Text").html('--');
             }
 
-            updateCharts(tempData, humidityData, VOCData, CO2Data);
+            updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data);
         }
     </script>
 
@@ -134,7 +142,7 @@
             <h5>CO<sub>2</sub></h5>
             <h1><span id="co2Text"></span><small>ppm</small></h1>
         </div>
-        <div class="metric" id="pmMetric">
+        <div onclick="$('#summary').hide(0); showPMChart(PM1Data, PM25Data, PM4Data, PM10Data);" class="metric" id="pmMetric">
             <h5><small>PM1.0</small> <span id="pm1Text"></span></h5>
             <h5><small>PM2.5</small> <span id="pm25Text"></span></h5>
             <h5><small>PM4.0</small> <span id="pm4Text"></span></h5>
@@ -144,6 +152,7 @@
     <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); $('#summary').fadeIn(250);"></canvas>
     <canvas id='VOCChart' width='320' height='240' onclick="$('#VOCChart').hide(); $('#summary').fadeIn(250);"></canvas>
     <canvas id='CO2Chart' width='320' height='240' onclick="$('#CO2Chart').hide(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='PMChart' width='320' height='240' onclick="$('#PMChart').hide(); $('#summary').fadeIn(250);"></canvas>
     <!-- Leave this at the bottom -->
     <script src="bootstrap.bundle.min.js"></script>
 </body>

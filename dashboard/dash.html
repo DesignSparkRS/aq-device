@@ -56,6 +56,7 @@
 
         var tempData = [];
         var humidityData = [];
+        var VOCData = [];
 
         let socket = new WebSocket("ws://airquality:8765");
 
@@ -83,6 +84,7 @@
             if(dataObj.hasOwnProperty('thv')) {
                 $("#vocText").html(dataObj['thv']['vocIndex']);
                 $("#vocMetric").css('background-color', vocColourScale(dataObj['thv']['vocIndex']).hex());
+                VOCData.push({'x': time, 'y': dataObj['thv']['vocIndex']});
             } else {
                 $("#vocText").html('--');
                 $("#vocMetric").css('background-color', '#bbb');
@@ -109,7 +111,7 @@
                 $("#pm10Text").html('--');
             }
 
-            updateCharts();
+            updateCharts(tempData, humidityData, VOCData);
         }
     </script>
 
@@ -122,7 +124,7 @@
             <h1><span id="tempText"></span><small>°C</small></h1>
             <h1><span id="humidityText"></span><small>%</small></h1>
         </div>
-        <div class="metric" id="vocMetric">
+        <div onclick="$('#summary').hide(0); showVOCChart(VOCData);" class="metric" id="vocMetric">
             <h5>VOC</h5>
             <h1 id="vocText"></h1>
         </div>
@@ -138,6 +140,7 @@
         </div>
     </div>
     <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); $('#summary').fadeIn(250);"></canvas>
+    <canvas id='VOCChart' width='320' height='240' onclick="$('#VOCChart').hide(); $('#summary').fadeIn(250);"></canvas>
     <!-- Leave this at the bottom -->
     <script src="bootstrap.bundle.min.js"></script>
 </body>

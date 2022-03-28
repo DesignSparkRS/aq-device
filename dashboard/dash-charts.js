@@ -1,10 +1,15 @@
 var tempChart = null;
+var VOCChart = null;
 
-function updateCharts() {
+function updateCharts(tempData, humidityData, VOCData) {
     if (tempChart !== null) {
         tempChart.data.datasets[0].data = tempData;
         tempChart.data.datasets[1].data = humidityData;
         tempChart.update();
+    }
+    if (VOCChart !== null) {
+        VOCChart.data.datasets[0].data = VOCData;
+        VOCChart.update();
     }
 }
 
@@ -29,11 +34,29 @@ function showTempChart(tempData, humidityData) {
         }
     ]
 
-    tempChart = createChart(datasets);
+    tempChart = createChart($("#temperatureChart"), datasets);
 }
 
-function createChart(ds) {
-    return new Chart($("#temperatureChart"), {
+function showVOCChart(VOCData) {
+    if (VOCChart !== null) {
+        VOCChart.destroy();
+    }
+    var datasets = [
+        {
+            label: 'Volatile Organic Compounds',
+            data: VOCData,
+            borderColor: 'green',
+            backgroundColor: 'green',
+            pointRadius: 0
+        }
+    ]
+
+    VOCChart = createChart($("#VOCChart"), datasets);
+}
+
+
+function createChart(chartElem, ds) {
+    return new Chart($(chartElem), {
         type: 'line',
         data: {
             datasets: ds

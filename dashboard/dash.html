@@ -9,6 +9,10 @@
 
     <script src="chroma.min.js"></script>
     <script src="jquery.min.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="chart.min.js"></script>
+    <script src="chartjs-adapter-moment.min.js"></script>
+    <script src="dash-charts.js"></script>
 
     <style>
         * {
@@ -35,21 +39,34 @@
             background-color: #bbb;
             border-radius: 10px;
         }
+
+        #summary {
+            width: 100%;
+            height: 100%;
+        }
+
+        #temperatureChart {
+            display: none;
+        }
     </style>
 
     <script type="text/javascript">
         var vocColourScale = chroma.scale(['green', 'red']).domain([100, 500]).mode('lrgb').correctLightness();
         var co2ColourScale = chroma.scale(['green', 'red']).domain([0, 2000]).mode('lrgb').correctLightness();
 
+        var tempData = [];
+        var humidityData = [];
+
         let socket = new WebSocket("ws://airquality:8765");
 
         socket.onmessage = function(event) {
-            console.log(event.data);
             dataObj = JSON.parse(event.data);
+            let time = Date.now();
 
             // Populate temperature
             if(dataObj.hasOwnProperty('thv')) {
                 $("#tempText").html(dataObj['thv']['temperature']);
+                tempData.push({'x': time, 'y': dataObj['thv']['temperature']});
             } else {
                 $("#tempText").html('--');
             }
@@ -57,6 +74,7 @@
             // Populate humidity
             if(dataObj.hasOwnProperty('thv')) {
                 $("#humidityText").html(dataObj['thv']['humidity']);
+                humidityData.push({'x': time, 'y': dataObj['thv']['humidity']});
             } else {
                 $("#humidityText").html('--');
             }
@@ -90,31 +108,36 @@
                 $("#pm4Text").html('--');
                 $("#pm10Text").html('--');
             }
+
+            updateCharts();
         }
     </script>
 
     <title>Websocket Data Test</title>
 </head>
 <body>
-    <div class="metric" id="tempRhMetric">
-        <h5>T & RH</h5>
-        <h1><span id="tempText"></span><small>°C</small></h1>
-        <h1><span id="humidityText"></span><small>%</small></h1>
+    <div id='summary'>
+        <div onclick="$('#summary').hide(0); showTempChart(tempData, humidityData);" class="metric" id="tempRhMetric">
+            <h5>T & RH</h5>
+            <h1><span id="tempText"></span><small>°C</small></h1>
+            <h1><span id="humidityText"></span><small>%</small></h1>
+        </div>
+        <div class="metric" id="vocMetric">
+            <h5>VOC</h5>
+            <h1 id="vocText"></h1>
+        </div>
+        <div class="metric" id="co2Metric">
+            <h5>CO<sub>2</sub></h5>
+            <h1><span id="co2Text"></span><small>ppm</small></h1>
+        </div>
+        <div class="metric" id="pmMetric">
+            <h5><small>PM1.0</small> <span id="pm1Text"></span></h5>
+            <h5><small>PM2.5</small> <span id="pm25Text"></span></h5>
+            <h5><small>PM4.0</small> <span id="pm4Text"></span></h5>
+            <h5><small>PM10</small> <span id="pm10Text"></span></h5>
+        </div>
     </div>
-    <div class="metric" id="vocMetric">
-        <h5>VOC</h5>
-        <h1 id="vocText"></h1>
-    </div>
-    <div class="metric" id="co2Metric">
-        <h5>CO<sub>2</sub></h5>
-        <h1><span id="co2Text"></span><small>ppm</small></h1>
-    </div>
-    <div class="metric" id="pmMetric">
-        <h5><small>PM1.0</small> <span id="pm1Text"></span></h5>
-        <h5><small>PM2.5</small> <span id="pm25Text"></span></h5>
-        <h5><small>PM4.0</small> <span id="pm4Text"></span></h5>
-        <h5><small>PM10</small> <span id="pm10Text"></span></h5>
-    </div>
+    <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); $('#summary').fadeIn(250);"></canvas>
     <!-- Leave this at the bottom -->
     <script src="bootstrap.bundle.min.js"></script>
 </body>

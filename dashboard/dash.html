@@ -8,6 +8,7 @@
     <link href="bootstrap.min.css" rel="stylesheet">
 
     <script src="chroma.min.js"></script>
+    <script src="jquery.min.js"></script>
 
     <style>
         * {
@@ -48,46 +49,46 @@
 
             // Populate temperature
             if(dataObj.hasOwnProperty('thv')) {
-                document.getElementById("tempText").innerHTML = dataObj['thv']['temperature'];
+                $("#tempText").html(dataObj['thv']['temperature']);
             } else {
-                document.getElementById("tempText").innerHTML = "--";
+                $("#tempText").html('--');
             }
 
             // Populate humidity
             if(dataObj.hasOwnProperty('thv')) {
-                document.getElementById("humidityText").innerHTML = dataObj['thv']['humidity'];
+                $("#humidityText").html(dataObj['thv']['humidity']);
             } else {
-                document.getElementById("humidityText").innerHTML = "--";
+                $("#humidityText").html('--');
             }
 
             // Populate and colour VOC index
             if(dataObj.hasOwnProperty('thv')) {
-                document.getElementById("vocText").innerHTML = dataObj['thv']['vocIndex'];
-                document.getElementById("vocMetric").style.backgroundColor = vocColourScale(dataObj['thv']['vocIndex']).hex();
+                $("#vocText").html(dataObj['thv']['vocIndex']);
+                $("#vocMetric").css('background-color', vocColourScale(dataObj['thv']['vocIndex']).hex());
             } else {
-                document.getElementById("vocText").innerHTML = "--";
-                document.getElementById("vocMetric").style.backgroundColor = '#bbb';
+                $("#vocText").html('--');
+                $("#vocMetric").css('background-color', '#bbb');
             }
 
             // Populate and colour CO2
             if(dataObj.hasOwnProperty('co2')) {
-                document.getElementById("co2Text").innerHTML = dataObj['co2']['co2'];
-                document.getElementById("co2Metric").style.backgroundColor = co2ColourScale(dataObj['co2']['co2']).hex();
+                $("#co2Text").html(dataObj['co2']['co2']);
+                $("#co2Metric").css('background-color', co2ColourScale(dataObj['co2']['co2']).hex());
             } else {
-                document.getElementById("co2Text").innerHTML = "--";
-                document.getElementById("co2Metric").style.backgroundColor = '#bbb';
+                $("#co2Text").html("--");
+                $("#co2Metric").css('background-color', '#bbb');
             }
 
             if(dataObj.hasOwnProperty('pm')) {
-                document.getElementById("pm1Text").innerHTML = dataObj['pm']['pm1.0'];
-                document.getElementById("pm25Text").innerHTML = dataObj['pm']['pm2.5'];
-                document.getElementById("pm4Text").innerHTML = dataObj['pm']['pm4.0'];
-                document.getElementById("pm10Text").innerHTML = dataObj['pm']['pm10'];
+                $("#pm1Text").html(dataObj['pm']['pm1.0']);
+                $("#pm25Text").html(dataObj['pm']['pm2.5']);
+                $("#pm4Text").html(dataObj['pm']['pm4.0']);
+                $("#pm10Text").html(dataObj['pm']['pm10']);
             } else {
-                document.getElementById("pm1Text").innerHTML = "--";
-                document.getElementById("pm25Text").innerHTML = "--";
-                document.getElementById("pm4Text").innerHTML = "--";
-                document.getElementById("pm10Text").innerHTML = "--";
+                $("#pm1Text").html('--');
+                $("#pm25Text").html('--');
+                $("#pm4Text").html('--');
+                $("#pm10Text").html('--');
             }
         }
     </script>

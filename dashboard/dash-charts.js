@@ -143,3 +143,12 @@ function createChart(chartElem, ds) {
         }
     });
 }
+
+function trimData(dataset, maxAge) {
+    let now = Date.now();
+    dataset.forEach(data => {
+        if(now - data[0].x > maxAge) {
+            data.shift();
+        }
+    });
+}

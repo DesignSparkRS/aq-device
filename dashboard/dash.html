@@ -121,6 +121,9 @@
                 $("#pm10Text").html('--');
             }
 
+            // Keep only the last 1 hour of data
+            trimData([tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data], 3600000);
+
             updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data);
         }
     </script>

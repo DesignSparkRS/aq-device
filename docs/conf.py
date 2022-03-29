@@ -38,8 +38,8 @@ extensions = [
 # Configuration for intersphinx mapping
 
 intersphinx_mapping = {
-    # Links to the main DesignSpark Docs project.
     'dsdocs': ('https://docs.designspark.io/en/latest/', None),
+    'esdklib': ('https://docs.designspark.io/projects/esdk-library/en/latest/', None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

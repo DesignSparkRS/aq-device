@@ -33,7 +33,7 @@
     </style>
 
     <script type="text/javascript">
-        let socket = new WebSocket("ws://callumpi:8765");
+        let socket = new WebSocket("ws://airquality:8765");
 
         socket.onmessage = function(event) {
             dataObj = JSON.parse(event.data);

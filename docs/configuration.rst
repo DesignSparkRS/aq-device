@@ -60,6 +60,9 @@ Try to pick something unique for the :code:`friendlyname`. This is not
 essential, but will be helpful in debugging any issues and when it comes to
 organising collaborative projects.
 
+.. warning::
+   The :code:`friendlyname` must not be changed without good reason, as this is used as the key for constructing visualisations and whenever this is changed, series data and hence plots etc. will become non-contigious.   
+
 The :code:`location` should be set to e.g. "kitchen" or "livingroom" etc. A
 taxonomy has been created and for details, see the :doc:`Air Quality Project
 Taxonomy <dsdocs:aq/taxonomy>`. Please be sure to pick a location from this

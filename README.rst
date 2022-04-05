@@ -15,7 +15,7 @@ The aq-device application:
   * Publishes measurements to one or more remote time series databases
   * Logs measurements to a local CSV file
 
-Hardware access is via the DesignSpark.ESDK library.
+Hardware access is via the :doc:`DesignSpark.ESDK library <esdklib:index>`.
 
 Configuration is via a single TOML file.
 

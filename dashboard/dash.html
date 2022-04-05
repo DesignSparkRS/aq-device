@@ -45,14 +45,26 @@
             height: 100%;
         }
 
+        .page {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
         #temperatureChart, #VOCChart, #CO2Chart, #PMChart {
             display: none;
+        }
+
+        .code {
+            font-family: 'Courier New', monospace;
         }
     </style>
 
     <script type="text/javascript">
         var vocColourScale = chroma.scale(['green', 'red']).domain([100, 500]).mode('lrgb').correctLightness();
         var co2ColourScale = chroma.scale(['green', 'red']).domain([0, 2000]).mode('lrgb').correctLightness();
+
+        
 
         var tempData = [];
         var humidityData = [];
@@ -121,6 +133,52 @@
                 $("#pm10Text").html('--');
             }
 
+            if(dataObj.hasOwnProperty('hardwareId')) {
+                $("#hwid").html(dataObj['hardwareId']);
+            }
+            
+            debugData = dataObj['debug'];
+
+            if(debugData.hasOwnProperty('location')) {
+                $("#location").html(debugData['location']['lat'] + ',' + debugData['location']['lon']);
+            }
+            
+            if(debugData.hasOwnProperty('appVersion') && debugData.hasOwnProperty('moduleVersion')) {
+                $("#appVersion").html(debugData['appVersion'] + ', ' + debugData['moduleVersion']);
+            }
+
+            if(debugData.hasOwnProperty('throttle_state')) {
+                throttleData = debugData['throttle_state'];
+                $("#throttleState").html(throttleData['code']);
+                if(throttleData.hasOwnProperty('status_strings')) {
+                    $("#throttleStrings").html(throttleData['status_strings']);
+                }
+            }
+
+            if(debugData.hasOwnProperty('gpsStatus')) {
+                gpsData = debugData['gpsStatus'];
+                if(gpsData.hasOwnProperty('mode') && gpsData.hasOwnProperty('satellitesUsed')) {
+                    $("#gpsMode").html(gpsData['mode'] + ',' + gpsData['satellitesUsed']);
+                }
+            }
+
+            if(debugData.hasOwnProperty('aqUsed')) {
+                $('#aqUsedSpace').html(debugData['aqUsed'] + '%');
+            }
+
+            if(debugData.hasOwnProperty('csvEnabled')) {
+                $('#csvStatus').html(String(debugData['csvEnabled']));
+            }
+
+            if(debugData.hasOwnProperty('aqUsed')) {
+                $('#debugStatus').html(String(debugData['debugEnabled']));
+            }
+
+            if(debugData.hasOwnProperty('remoteWriteStats')) {
+                $('#remoteWriteSuccessTime').html(debugData['remoteWriteStats']['remoteWriteSuccess']);
+                $('#remoteWriteFailTime').html(debugData['remoteWriteStats']['remoteWriteFail']);
+            }
+
             // Keep only the last 1 hour of data
             trimData([tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data], 3600000);
 
@@ -152,11 +210,63 @@
             <h5><small>PM10</small> <span id="pm10Text"></span></h5>
         </div>
     </div>
+
+    <div class="page" id='debug' onclick="$('#debug').hide(); $('#stats').fadeIn(250);">
+        HWID: <span class="code" id="hwid"></span><br>
+        Loc.: <span class="code" id="location"></span><br>
+        App, mod version: <span class="code" id="appVersion"></span><br>
+        Power throttle code: <span class="code" id="throttleState"></span><br>
+        Power throttle string: <span class="code" id="throttleStrings"></span><br>
+        GPS mode, sats: <span class="code" id="gpsMode"></span><br>
+        CSV: <span class="code" id="csvStatus"></span><br>
+        Debug: <span class="code" id="debugStatus"></span><br>
+        /aq used: <span class="code" id="aqUsedSpace"></span><br>
+    </div>
+
+    <div class="page" id='stats'>
+        Successful write TS: <span class="code" id="remoteWriteSuccessTime"></span><br>
+        Unsuccessful write TS: <span class="code" id="remoteWriteFailTime"></span><br>
+    </div>
+
     <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); tempChart.destroy(); $('#summary').fadeIn(250);"></canvas>
     <canvas id='VOCChart' width='320' height='240' onclick="$('#VOCChart').hide(); VOCChart.destroy(); $('#summary').fadeIn(250);"></canvas>
     <canvas id='CO2Chart' width='320' height='240' onclick="$('#CO2Chart').hide(); CO2Chart.destroy(); $('#summary').fadeIn(250);"></canvas>
     <canvas id='PMChart' width='320' height='240' onclick="$('#PMChart').hide(); PMChart.destroy(); $('#summary').fadeIn(250);"></canvas>
     <!-- Leave this at the bottom -->
     <script src="bootstrap.bundle.min.js"></script>
+    <script type="text/javascript">
+        var mouseDown = false;
+        $('.metric')
+            .on('touchstart mousedown', function(e) {
+                mouseDown = true;
+                timeoutId = setTimeout(function() {
+                    if(mouseDown) {
+                        // Held down for timeout value
+                        $('#summary').hide(0);
+                        $('#debug').fadeIn(250);
+                    }
+                }, 1000);
+            })
+            .on('touchend mouseup', function() {
+                clearTimeout(timeoutId);
+                mouseDown = false;
+            });
+
+        $('#stats')
+            .on('touchstart mousedown', function(e) {
+                mouseDown = true;
+                timeoutId = setTimeout(function() {
+                    if(mouseDown) {
+                        // Held down for timeout value
+                        $('#stats').hide(0);
+                        $('#summary').fadeIn(250);
+                    }
+                }, 1000);
+            })
+            .on('touchend mouseup', function() {
+                clearTimeout(timeoutId);
+                mouseDown = false;
+            });
+    </script>
 </body>
 </html>

@@ -16,6 +16,7 @@ import subprocess
 import copy
 import geohash
 import re
+import shutil
 from DesignSpark.ESDK import MAIN, THV, CO2, PM2, AppLogger
 import PrometheusWriter, CsvWriter, MQTT
 
@@ -58,6 +59,12 @@ def main():
     global appGitCommit
     appGitCommit = {"appVersion": getAppCommitHash()}
     debugData.update(appGitCommit)
+
+    global remoteWriteTimestamps
+    remoteWriteTimestamps = {'remoteWriteSuccess': 0, 'remoteWriteFail': 0}
+
+    debugData.update({'csvEnabled': getCsvEnabled()})
+    debugData.update({'debugEnabled': debugEnabled})
 
     # Give sensor string a restart
     mainboard.setPower(vcc3=False, vcc5=False)
@@ -154,11 +161,14 @@ def sensorsUpdateThread(sensorDataHandle):
         try:
             rawLocation = mainboard.getLocation()
             sensorDataHandle.update({'geohash': geohash.encode(rawLocation['lat'], rawLocation['lon'])})
+            debugData.update({'location': {'lat': rawLocation['lat'], 'lon': rawLocation['lon']}})
         except Exception as e:
             pass
 
+        debugData.update({'aqUsed': getAqUsedPercentage()})
         debugData.update(mainboard.getUndervoltageStatus())
         debugData.update(mainboard.getGPSStatus())
+        debugData.update({'remoteWriteStats': remoteWriteTimestamps})
 
         time.sleep(1)
 
@@ -175,7 +185,7 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel)
     localConfig.update({'friendlyname': getFriendlyName()})
 
     # Enforce a mininmum logging interval
-    if interval in localConfig:
+    if "interval" in localConfig:
         if int(localConfig['interval']) < PROMETHEUS_MIN_UPDATE_INTERVAL:
             logger.warning("Minimum Prometheus logging interval of {}s enforced".format(PROMETHEUS_MIN_UPDATE_INTERVAL))
             localConfig['interval'] = PROMETHEUS_MIN_UPDATE_INTERVAL
@@ -187,8 +197,8 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel)
         debug=debugEnabled, \
         hwid=hwid, \
         loggingLevel=loggingLevel, \
-        additionalLabels=configData['ESDK']) # 'ESDK' dictionary should contain any additional labels
-                                             # pulled from the config file
+        additionalLabels=configData['ESDK'], \
+        remoteWriteTimestamps = remoteWriteTimestamps)
 
     while True:
         writer.writeData(sensorData)
@@ -326,6 +336,15 @@ def getAppCommitHash() -> str:
     except Exception as e:
         logger.error("Could not determine Git hash! Reason {}".format(e))
         return ""
+
+def getAqUsedPercentage() -> int:
+    try:
+        aqStats = shutil.disk_usage("/aq")
+        aqUsed = round((aqStats.used / aqStats.total) * 100, 1)
+        return aqUsed
+    except Exception as e:
+        logger.error("Could not get /aq free space, reason {}".format(e))
+        return 0
 
 if __name__ == "__main__":
     main()

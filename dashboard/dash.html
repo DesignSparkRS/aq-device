@@ -19,6 +19,13 @@
             -webkit-box-sizing: border-box;
             -moz-box-sizing: border-box;
             box-sizing: border-box;
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
         }
 
         html {
@@ -65,7 +72,7 @@
         var co2ColourScale = chroma.scale(['green', 'red']).domain([0, 2000]).mode('lrgb').correctLightness();
 
         
-
+        var date = new Date();
         var tempData = [];
         var humidityData = [];
         var VOCData = [];
@@ -175,8 +182,15 @@
             }
 
             if(debugData.hasOwnProperty('remoteWriteStats')) {
-                $('#remoteWriteSuccessTime').html(debugData['remoteWriteStats']['remoteWriteSuccess']);
-                $('#remoteWriteFailTime').html(debugData['remoteWriteStats']['remoteWriteFail']);
+                if(debugData['remoteWriteStats']['remoteWriteSuccess'] != 0) {
+                    date.setTime(debugData['remoteWriteStats']['remoteWriteSuccess'] * 1000);
+                    $('#remoteWriteSuccessTime').html(date.toUTCString());
+                }
+
+                if(debugData['remoteWriteStats']['remoteWriteFail'] != 0) {
+                    date.setTime(debugData['remoteWriteStats']['remoteWriteFail'] * 1000);
+                    $('#remoteWriteFailTime').html(date.toUTCString());
+                }
             }
 
             // Keep only the last 1 hour of data
@@ -213,19 +227,19 @@
 
     <div class="page" id='debug' onclick="$('#debug').hide(); $('#stats').fadeIn(250);">
         HWID: <span class="code" id="hwid"></span><br>
+        GPS mode, sats: <span class="code" id="gpsMode"></span><br>
         Loc.: <span class="code" id="location"></span><br>
         App, mod version: <span class="code" id="appVersion"></span><br>
-        Power throttle code: <span class="code" id="throttleState"></span><br>
-        Power throttle string: <span class="code" id="throttleStrings"></span><br>
-        GPS mode, sats: <span class="code" id="gpsMode"></span><br>
         CSV: <span class="code" id="csvStatus"></span><br>
         Debug: <span class="code" id="debugStatus"></span><br>
         /aq used: <span class="code" id="aqUsedSpace"></span><br>
+        Power throttle code: <span class="code" id="throttleState"></span><br>
+        Power throttle string: <span class="code" id="throttleStrings"></span><br>
     </div>
 
     <div class="page" id='stats'>
-        Successful write TS: <span class="code" id="remoteWriteSuccessTime"></span><br>
-        Unsuccessful write TS: <span class="code" id="remoteWriteFailTime"></span><br>
+        Successful remote write TS: <span class="code" id="remoteWriteSuccessTime"></span><br>
+        Unsuccessful remote write TS: <span class="code" id="remoteWriteFailTime"></span><br>
     </div>
 
     <canvas id='temperatureChart' width='320' height='240' onclick="$('#temperatureChart').hide(); tempChart.destroy(); $('#summary').fadeIn(250);"></canvas>

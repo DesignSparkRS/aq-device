@@ -240,7 +240,7 @@ def getConfig():
         config = toml.loads(fh.read())
 
         # Regex to sanitise some inputs
-        string_strip = re.compile("[\w\d_]")
+        string_strip = re.compile("\W+")
 
         # Mandatory config key checking
         if 'ESDK' in config:

@@ -200,9 +200,9 @@
         }
     </script>
 
-    <title>Websocket Data Test</title>
+    <title>ESDK UI</title>
 </head>
-<body>
+<body oncontextmenu="return false;">
     <div id='summary'>
         <div onclick="$('#summary').hide(0); showTempChart(tempData, humidityData);" class="metric" id="tempRhMetric">
             <h5>T & RH</h5>
@@ -237,7 +237,7 @@
         Power throttle string: <span class="code" id="throttleStrings"></span><br>
     </div>
 
-    <div class="page" id='stats'>
+    <div class="page" id='stats' onclick="$('#stats').hide(); $('#debug').fadeIn(250);">
         Successful remote write TS: <span class="code" id="remoteWriteSuccessTime"></span><br>
         Unsuccessful remote write TS: <span class="code" id="remoteWriteFailTime"></span><br>
     </div>
@@ -266,7 +266,7 @@
                 mouseDown = false;
             });
 
-        $('#stats')
+        $('#stats, #debug')
             .on('touchstart mousedown', function(e) {
                 mouseDown = true;
                 timeoutId = setTimeout(function() {

@@ -272,6 +272,7 @@
                 timeoutId = setTimeout(function() {
                     if(mouseDown) {
                         // Held down for timeout value
+                        $('#debug').hide(0);
                         $('#stats').hide(0);
                         $('#summary').fadeIn(250);
                     }

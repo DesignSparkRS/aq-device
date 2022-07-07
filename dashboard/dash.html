@@ -35,6 +35,7 @@
         html, body {
             width: 320px;
             height: 240px;
+            position: absolute;
         }
 
         .metric {
@@ -50,6 +51,7 @@
         #summary {
             width: 100%;
             height: 100%;
+            position: absolute;
         }
 
         .page {
@@ -64,6 +66,12 @@
 
         .code {
             font-family: 'Courier New', monospace;
+        }
+
+        .gpsIndicator {
+            float: right;
+            position: relative;
+            z-index: 1;
         }
     </style>
 
@@ -165,6 +173,16 @@
             if(debugData.hasOwnProperty('gpsStatus')) {
                 gpsData = debugData['gpsStatus'];
                 if(gpsData.hasOwnProperty('mode') && gpsData.hasOwnProperty('satellitesUsed')) {
+                    // Show appropriate GPS status icons
+                    if(gpsData['mode'] == 0) {
+                        $('#gpsLockedIcon').hide();
+                        $('#gpsNoSatsIcon').show();
+                    }
+                    if(gpsData['mode'] >= 2) {
+                        $('#gpsNoSatsIcon').hide();
+                        $('#gpsLockedIcon').show();
+                    }
+
                     $("#gpsMode").html(gpsData['mode'] + ',' + gpsData['satellitesUsed']);
                 }
             }
@@ -203,7 +221,17 @@
     <title>ESDK UI</title>
 </head>
 <body oncontextmenu="return false;">
+    <div class="gpsIndicator">
+        <svg style="width:24px;height:24px; display:none" viewBox="0 0 24 24" id="gpsNoSatsIcon">
+            <path fill="currentColor" d="M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z" />
+        </svg>
+
+        <svg style="width:24px;height:24px; display:none" viewBox="0 0 24 24" id="gpsLockedIcon">
+            <path fill="currentColor" d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z" />
+        </svg>
+    </div>
     <div id='summary'>
+        
         <div onclick="$('#summary').hide(0); showTempChart(tempData, humidityData);" class="metric" id="tempRhMetric">
             <h5>T & RH</h5>
             <h1><span id="tempText"></span><small>°C</small></h1>

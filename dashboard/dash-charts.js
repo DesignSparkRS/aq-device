@@ -2,8 +2,11 @@ var tempChart = null;
 var VOCChart = null;
 var CO2Chart = null;
 var PMChart = null;
+var NO2Chart = null;
+var NRDChart = null;
+var FDHChart = null;
 
-function updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data) {
+function updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data, NO2Data, NRDData, FDHData) {
     if (tempChart !== null && tempChart.ctx !== null) {
         tempChart.data.datasets[0].data = tempData;
         tempChart.data.datasets[1].data = humidityData;
@@ -23,6 +26,18 @@ function updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Dat
         PMChart.data.datasets[2].data = PM4Data;
         PMChart.data.datasets[3].data = PM10Data;
         PMChart.update();
+    }
+    if (NO2Chart !== null && NO2Chart.ctx !== null) {
+        NO2Chart.data.datasets[0].data = NO2Data;
+        NO2Chart.update();
+    }
+    if (NRDChart !== null && NRDChart.ctx !== null) {
+        NRDChart.data.datasets[0].data = NRDData;
+        NRDChart.update();
+    }
+    if (FDHChart !== null && FDHChart.ctx !== null) {
+        FDHChart.data.datasets[0].data = FDHData;
+        FDHChart.update();
     }
 }
 
@@ -108,6 +123,48 @@ function showPMChart(PM1Data, PM25Data, PM4Data, PM10Data) {
     ]
 
     PMChart = createChart($("#PMChart"), datasets);
+}
+
+function showNO2Chart(NO2Data) {
+    var datasets = [
+        {
+            label: 'Nitrogen Dioxide',
+            data: NO2Data,
+            borderColor: 'green',
+            backgroundColor: 'green',
+            pointRadius: 0
+        }
+    ]
+
+    NO2Chart = createChart($("#NO2Chart"), datasets);
+}
+
+function showNRDChart(NRDData) {
+    var datasets = [
+        {
+            label: 'Nuclear Counts Per Minute',
+            data: NRDData,
+            borderColor: 'green',
+            backgroundColor: 'green',
+            pointRadius: 0
+        }
+    ]
+
+    NRDChart = createChart($("#NRDChart"), datasets);
+}
+
+function showFDHChart(FDHData) {
+    var datasets = [
+        {
+            label: 'Formaldehyde',
+            data: FDHData,
+            borderColor: 'green',
+            backgroundColor: 'green',
+            pointRadius: 0
+        }
+    ]
+
+    FDHChart = createChart($("#FDHChart"), datasets);
 }
 
 function createChart(chartElem, ds) {

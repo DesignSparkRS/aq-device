@@ -17,7 +17,7 @@ import copy
 import geohash
 import re
 import shutil
-from DesignSpark.ESDK import MAIN, THV, CO2, PM2, AppLogger
+from DesignSpark.ESDK import MAIN, THV, CO2, PM2, NO2, NRD, FDH, AppLogger
 import PrometheusWriter, CsvWriter, MQTT
 
 configFile='/boot/aq/aq.toml'
@@ -82,7 +82,7 @@ def main():
     debugData.update(mainboard.getModuleVersion())
 
     # Give sensors some time to sort themselves out before attempting to read
-    time.sleep(0.05)
+    time.sleep(1)
     mainboard.createModules()
     time.sleep(0.05)
 

@@ -17,14 +17,19 @@ import copy
 import geohash
 import re
 import shutil
+import sys
+import RPi.GPIO as GPIO
 from DesignSpark.ESDK import MAIN, THV, CO2, PM2, NO2, NRD, FDH, AppLogger
-import PrometheusWriter, CsvWriter, MQTT
+import PrometheusWriter, CsvWriter, MQTT, WebServer
 
 configFile='/boot/aq/aq.toml'
 debugEnabled = False
 
+loggingButton = 19
+
 sensorData = {}
 debugData = {}
+csvLoggingEnabledState = False
 
 WEBSOCKET_UPDATE_INTERVAL = 5
 CSV_UPDATE_INTERVAL = 30
@@ -39,6 +44,17 @@ async def websocketPush(websocket, path):
         await asyncio.sleep(WEBSOCKET_UPDATE_INTERVAL)
 
 def main():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(loggingButton, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(loggingButton, GPIO.RISING)
+
+    buttonWatcherThreadHandle = threading.Thread(target=buttonWatcherThread, \
+        args=(), \
+        daemon=True)
+    buttonWatcherThreadHandle.name = "buttonWatcherThread"
+    buttonWatcherThreadHandle.start()
+
     global configData
     configData = getConfig()
 
@@ -111,14 +127,15 @@ def main():
         mqttUpdateThreadHandle.name = "mqttUpdateThread"
         mqttUpdateThreadHandle.start()
 
-
+    global csvLoggingEnabledState
+    csvEnabled = getCsvEnabled()
     # CSV thread init
-    if getCsvEnabled():
+    if csvEnabled:
         logger.debug("Starting CSV update thread")
         csvUpdateThreadHandle = threading.Thread(target=csvUpdateThread, \
             args=(debugEnabled, sensorData, hwid, loggingConfig), \
             daemon=True)
-
+        csvLoggingEnabledState = csvEnabled
         csvUpdateThreadHandle.name = "csvUpdateThread"
         csvUpdateThreadHandle.start()
 
@@ -141,17 +158,44 @@ def main():
 
         logger.debug("Started Prometheus threads: {}".format(prometheusThreads))
 
+    logger.debug("Starting web server thread")
+    webServerThreadHandle = threading.Thread(target=webServerThread, \
+        args=(debugEnabled, loggingConfig), \
+        daemon=True)
+    webServerThreadHandle.name = "webServerThread"
+    webServerThreadHandle.start()
+
     logger.debug("Starting asyncio websocket")
     asyncio.run(startWebsocket())
 
     while True:
-        # Main thread loop
         pass
 
 async def startWebsocket():
     logger.debug("Started websocket")
     async with websockets.serve(websocketPush, "0.0.0.0", 8765):
         await asyncio.Future()  # run forever
+
+def webServerThread(debugEnabled, loggingLevel):
+    logger.debug("Started web server thread")
+    ws = WebServer.WebServer(debug=debugEnabled, loggingLevel=loggingLevel)
+    ws.run()
+    logger.debug("Web server should be running")
+    while True:
+        pass
+
+def buttonWatcherThread():
+    global csvLoggingEnabledState
+    while True:
+        if GPIO.event_detected(loggingButton):
+            if csvLoggingEnabledState:
+                logger.debug("Stopping CSV logging on user request")
+                csvLoggingEnabledState = False
+                debugData.update({'csvEnabled': csvLoggingEnabledState})
+            elif not csvLoggingEnabledState:
+                logger.debug("Starting CSV logging on user request")
+                csvLoggingEnabledState = True
+                debugData.update({'csvEnabled': csvLoggingEnabledState})
 
 def sensorsUpdateThread(sensorDataHandle):
     logger.debug("Started sensor update thread")
@@ -206,13 +250,25 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel)
 
 def csvUpdateThread(debugEnabled, sensorData, hwid, loggingLevel):
     logger.debug("Started CSV update thread")
-    csv = CsvWriter.CsvWriter(debug=debugEnabled, \
-        friendlyName=getFriendlyName(), \
-        hwid=hwid['hardwareId'], \
-        loggingLevel=loggingLevel)
+    global csvLoggingEnabledState
+    firstRun = True
+    csv = None
     while True:
-        csv.addRow(sensorData)
-        time.sleep(CSV_UPDATE_INTERVAL)
+        if csvLoggingEnabledState:
+            if firstRun == True:
+                logger.info("Starting CSV logging")
+                csv = CsvWriter.CsvWriter(debug=debugEnabled, \
+                friendlyName=getFriendlyName(), \
+                hwid=hwid['hardwareId'], \
+                loggingLevel=loggingLevel)
+                firstRun = False
+
+            csv.addRow(sensorData)
+            time.sleep(CSV_UPDATE_INTERVAL)
+
+        if not csvLoggingEnabledState:
+            firstRun = True
+            csv = None
 
 def getDebugConfig():
     """ Return debugging configuration """

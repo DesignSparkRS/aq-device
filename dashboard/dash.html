@@ -61,7 +61,7 @@
             position: absolute;
         }
 
-        #temperatureChart, #VOCChart, #CO2Chart, #PMChart, #NO2Chart, #NRDChart {
+        #temperatureChart, #VOCChart, #CO2Chart, #PMChart, #NO2Chart, #NRDChart, #FDHChart {
             display: none;
             position: absolute;
         }
@@ -70,7 +70,7 @@
             font-family: 'Courier New', monospace;
         }
 
-        .indicator {
+        .statusIndicator {
             float: right;
             position: relative;
             z-index: 1;
@@ -104,7 +104,13 @@
         var NRDData = [];
         var FDHData = [];
 
-        let socket = new WebSocket("ws://airquality:8765");
+        var wsUrl = "ws://" + window.location.hostname + ":8765";
+
+        if (window.location.hostname == '') {
+            wsUrl = "ws://127.0.0.1:8765";
+        }
+
+        let socket = new WebSocket(wsUrl);
 
         socket.onmessage = function(event) {
             dataObj = JSON.parse(event.data);
@@ -234,6 +240,9 @@
                 if(debugData['csvEnabled'] == true) {
                     $('#recordingIcon').show();
                 }
+                if(debugData['csvEnabled'] == false) {
+                    $('#recordingIcon').hide();
+                }
                 $('#csvStatus').html(String(debugData['csvEnabled']));
             }
 
@@ -263,7 +272,7 @@
     <title>ESDK UI</title>
 </head>
 <body oncontextmenu="return false;">
-    <div class="indicator">
+    <div class="statusIndicator">
         <svg style="width:24px;height:24px; display:none" viewBox="0 0 24 24" id="gpsNoSatsIcon">
             <path fill="currentColor" d="M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z" />
         </svg>
@@ -272,7 +281,7 @@
             <path fill="currentColor" d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z" />
         </svg>
     </div>
-    <div class="indicator">
+    <div class="statusIndicator">
         <svg style="width:24px;height:24px; display:none; animation:blinkingIcon 1s infinite;" viewBox="0 0 24 24" id="recordingIcon"><path fill="currentColor" d="M12.5,5A7.5,7.5 0 0,0 5,12.5A7.5,7.5 0 0,0 12.5,20A7.5,7.5 0 0,0 20,12.5A7.5,7.5 0 0,0 12.5,5M7,10H9A1,1 0 0,1 10,11V12C10,12.5 9.62,12.9 9.14,12.97L10.31,15H9.15L8,13V15H7M12,10H14V11H12V12H14V13H12V14H14V15H12A1,1 0 0,1 11,14V11A1,1 0 0,1 12,10M16,10H18V11H16V14H18V15H16A1,1 0 0,1 15,14V11A1,1 0 0,1 16,10M8,11V12H9V11" /></svg>
     </div>
     <div id='summary' class="summary">

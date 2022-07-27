@@ -174,6 +174,7 @@ function createChart(chartElem, ds) {
             datasets: ds
         },
         options: {
+            responsive: true,
             scales: {
                 x: {
                     type: 'time',
@@ -192,8 +193,10 @@ function createChart(chartElem, ds) {
 function trimData(dataset, maxAge) {
     let now = Date.now();
     dataset.forEach(data => {
-        if(now - data[0].x > maxAge) {
-            data.shift();
+        if(typeof data[0] !== "undefined") {
+            if(now - data[0].x > maxAge) {
+                data.shift();
+            }
         }
     });
 }

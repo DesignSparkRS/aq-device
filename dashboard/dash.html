@@ -192,6 +192,16 @@
                 $('#hchoText').html("--");
             }
 
+            if(dataObj.hasOwnProperty('pir')) {
+                if(dataObj['pir']['motion'] == 1) {
+                    $('#motionText').html("Motion detected");
+                } else {
+                    $('#motionText').html("No motion detected");
+                }
+            } else {
+                $('#motionText').html("--");
+            }
+
             // Deal with debug data
             if(dataObj.hasOwnProperty('hardwareId')) {
                 $("#hwid").html(dataObj['hardwareId']);
@@ -321,7 +331,9 @@
             <h5>Formaldehyde</h5>
             <h1><span id="hchoText"></span><small>ppb</small></h1>
         </div>
-        <div class="metric">
+        <div class="metric" id="motionMetric">
+            <h5>Motion</h5>
+            <h1><span id="motionText"></span>
         </div>
     </div>
 

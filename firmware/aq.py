@@ -99,6 +99,7 @@ def main():
 
     # Give sensors some time to sort themselves out before attempting to read
     time.sleep(1)
+    mainboard.loadPlugins()
     mainboard.createModules()
     time.sleep(0.05)
 

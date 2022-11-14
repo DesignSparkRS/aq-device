@@ -47,7 +47,7 @@
         var wsUrl = "ws://" + window.location.hostname + ":8765";
 
         if (window.location.hostname == '') {
-            wsUrl = "ws://airquality:8765";
+            wsUrl = "ws://127.0.0.1:8765";
         }
 
         let socket = new WebSocket(wsUrl);
@@ -223,10 +223,10 @@
                     <div class="card h-100">
                         <canvas class="card-img-top" id='temperatureChart'></canvas>
                         <div class="card-body">
-                            <h5 class="card-title">Temperature & relative humidity</h5>
+                            <h5 class="card-title">Temperature & Humidity</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">Temperature: <span id="tempText"></span>°C</li>
-                                <li class="list-group-item">Humidity: <span id="humidityText"></span>%</li>
+                                <li class="list-group-item">Relative Humidity: <span id="humidityText"></span>%</li>
                                 <li class="list-group-item"></li>
                             </ul>
                         </div>
@@ -236,9 +236,9 @@
                     <div class="card h-100">
                         <canvas class="card-img-top" id='VOCChart'></canvas>
                         <div class="card-body">
-                            <h5 class="card-title">VOC Index</h5>
+                            <h5 class="card-title">Volatile Ogranic Compounds (VOCs)</h5>
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item">VOCs: <span id="vocText"></span></li>
+                                <li class="list-group-item">VOC Index: <span id="vocText"></span></li>
                                 <li class="list-group-item"></li>
                             </ul>
                         </div>
@@ -248,7 +248,7 @@
                     <div class="card h-100">
                         <canvas class="card-img-top" id='CO2Chart'></canvas>
                         <div class="card-body">
-                            <h5 class="card-title">CO<sub>2</sub> Concentration</h5>
+                            <h5 class="card-title">CO<sub>2</sub> Level</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">CO<sub>2</sub>: <span id="co2Text"></span>ppm</li>
                                 <li class="list-group-item"></li>
@@ -274,7 +274,7 @@
                     <div class="card h-100">
                         <canvas class="card-img-top" id='NO2Chart'></canvas>
                         <div class="card-body">
-                            <h5 class="card-title">NO<sub>2</sub> Concentration</h5>
+                            <h5 class="card-title">NO<sub>2</sub> Level</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">NO<sub>2</sub>: <span id="no2Text"></span>ppm</li>
                                 <li class="list-group-item"></li>
@@ -286,7 +286,7 @@
                     <div class="card h-100">
                         <canvas class="card-img-top" id='NRDChart'></canvas>
                         <div class="card-body">
-                            <h5 class="card-title">Nuclear activity</h5>
+                            <h5 class="card-title">Nuclear Radiation</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">Counts per second: <span id="cpsText"></span>cps</li>
                                 <li class="list-group-item">Counts per minute: <span id="cpmText"></span>cpm</li>
@@ -299,7 +299,7 @@
                     <div class="card h-100">
                         <canvas class="card-img-top" id="FDHChart"></canvas>
                         <div class="card-body">
-                            <h5 class="card-title">Formaldehyde concentration</h5>
+                            <h5 class="card-title">Formaldehyde Level</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">Formaldehyde: <span id="hchoText"></span>ppb</li>
                                 <li class="list-group-item"></li>
@@ -360,9 +360,9 @@
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">AQ Partition usage</h5>
+                            <h5 class="card-title">AQ Partition Usage</h5>
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item">Percentage full: <code id="aqUsedSpace"></code>%</li>
+                                <li class="list-group-item">Percentage used: <code id="aqUsedSpace"></code>%</li>
                                 <li class="list-group-item"></li>
                             </ul>
                         </div>
@@ -371,7 +371,7 @@
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">Power status</h5>
+                            <h5 class="card-title">Power Status</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">Throttle string: <code id="throttleStrings"></code></li>
                                 <li class="list-group-item"></li>
@@ -382,7 +382,7 @@
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">Remote write status</h5>
+                            <h5 class="card-title">Remote Write (cloud) Status</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">Last successful write: <code id="remoteWriteSuccessTime"></code></li>
                                 <li class="list-group-item">Last unsuccessful write: <code id="remoteWriteFailTime"></code></li>
@@ -394,7 +394,7 @@
         </div>
     </div>
     <div class="footer bg-light">
-        <span><img src="https://github.com/DesignSparkRS/DesignSpark.ESDK/raw/main/docs/images/DS_logo_200w.png" alt="DesignSpark Logo"></span>
+        <span><img src="ds_logo.svg" alt="DesignSpark Logo" style="width:200px;"></span>
     </footer>
 
     <!-- Leave this at the bottom -->

@@ -47,7 +47,7 @@
         var wsUrl = "ws://" + window.location.hostname + ":8765";
 
         if (window.location.hostname == '') {
-            wsUrl = "ws://airquality:8765";
+            wsUrl = "ws://127.0.0.1:8765";
         }
 
         let socket = new WebSocket(wsUrl);
@@ -394,7 +394,7 @@
         </div>
     </div>
     <div class="footer bg-light">
-        <span><img src="https://github.com/DesignSparkRS/DesignSpark.ESDK/raw/main/docs/images/DS_logo_200w.png" alt="DesignSpark Logo"></span>
+        <span><img src="ds_logo.svg" alt="DesignSpark Logo" style="width:200px;"></span>
     </footer>
 
     <!-- Leave this at the bottom -->

@@ -198,7 +198,10 @@ The configuration used here is slightly different and must be set as follows:
   
 .. warning::
    Your RS Components or DesignSpark website username and password will not work here!
-  
+
+.. warning::
+   If you enter the wrong password it may cause your DesignSpark Cloud account to become locked-out. If you need to change this password, you should first take your device offline, change the password and then update this in your device config before powering it up again.
+
 The :code:`interval` parameter specifies the publishing period in seconds, the minimum value for which is 300 (5 minutes).
 
 Complete example

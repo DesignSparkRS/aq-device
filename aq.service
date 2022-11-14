@@ -3,7 +3,8 @@ Description=AQ Main application
 
 [Service]
 User=pi
-ExecStart=/usr/bin/python3 /home/pi/aq-device/firmware/aq.py
+WorkingDirectory=/home/pi/aq-device/firmware
+ExecStart=/usr/bin/python3 aq.py
 TimeoutSec=60
 
 [Install]

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <script src="chroma.min.js"></script>
+    <script src="jquery.min.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="chart.min.js"></script>
+    <script src="chartjs-adapter-moment.min.js"></script>
+    <script src="dash-charts.js"></script>
+
+    <style>
+        .footer {
+            position: fixed;
+            width: 100%;
+            left: 0;
+            bottom: 0;
+            padding-top: 0.5%;
+            padding-bottom: 0.5%;
+            text-align: center;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var vocColourScale = chroma.scale(['green', 'red']).domain([100, 500]).mode('lrgb').correctLightness();
+        var co2ColourScale = chroma.scale(['green', 'red']).domain([0, 2000]).mode('lrgb').correctLightness();
+
+        
+        var date = new Date();
+        var tempData = [];
+        var humidityData = [];
+        var VOCData = [];
+        var CO2Data = [];
+        var PM1Data = [];
+        var PM25Data = [];
+        var PM4Data = [];
+        var PM10Data = [];
+        var NO2Data = [];
+        var NRDData = [];
+        var FDHData = [];
+
+        var wsUrl = "ws://" + window.location.hostname + ":8765";
+
+        if (window.location.hostname == '') {
+            wsUrl = "ws://airquality:8765";
+        }
+
+        let socket = new WebSocket(wsUrl);
+
+        socket.onmessage = function(event) {
+            dataObj = JSON.parse(event.data);
+            console.debug(dataObj);
+            let time = Date.now();
+
+            // Populate temperature
+            if(dataObj.hasOwnProperty('thv')) {
+                $("#tempText").html(dataObj['thv']['temperature']);
+                tempData.push({'x': time, 'y': dataObj['thv']['temperature']});
+            } else {
+                $("#tempText").html('--');
+            }
+
+            // Populate humidity
+            if(dataObj.hasOwnProperty('thv')) {
+                $("#humidityText").html(dataObj['thv']['humidity']);
+                humidityData.push({'x': time, 'y': dataObj['thv']['humidity']});
+            } else {
+                $("#humidityText").html('--');
+            }
+
+            // Populate and colour VOC index
+            if(dataObj.hasOwnProperty('thv')) {
+                $("#vocText").html(dataObj['thv']['vocIndex']);
+                VOCData.push({'x': time, 'y': dataObj['thv']['vocIndex']});
+            } else {
+                $("#vocText").html('--');
+            }
+
+            // Populate and colour CO2
+            if(dataObj.hasOwnProperty('co2')) {
+                $("#co2Text").html(dataObj['co2']['co2']);
+                CO2Data.push({'x': time, 'y': dataObj['co2']['co2']});
+            } else {
+                $("#co2Text").html("--");
+            }
+
+            if(dataObj.hasOwnProperty('pm')) {
+                $("#pm1Text").html(dataObj['pm']['pm1.0']);
+                $("#pm25Text").html(dataObj['pm']['pm2.5']);
+                $("#pm4Text").html(dataObj['pm']['pm4.0']);
+                $("#pm10Text").html(dataObj['pm']['pm10']);
+                PM1Data.push({'x': time, 'y': dataObj['pm']['pm1.0']});
+                PM25Data.push({'x': time, 'y': dataObj['pm']['pm2.5']});
+                PM4Data.push({'x': time, 'y': dataObj['pm']['pm4.0']});
+                PM10Data.push({'x': time, 'y': dataObj['pm']['pm10']});
+            } else {
+                $("#pm1Text").html('--');
+                $("#pm25Text").html('--');
+                $("#pm4Text").html('--');
+                $("#pm10Text").html('--');
+            }
+
+            if(dataObj.hasOwnProperty('nrd')) {
+                $('#cpsText').html(dataObj['nrd']['cps']);
+                $('#cpmText').html(dataObj['nrd']['cpm']);
+                $('#totalCountsText').html(dataObj['nrd']['totalCounts']);
+                NRDData.push({'x': time, 'y': dataObj['nrd']['cpm']});
+            } else {
+                $("#cpsText").html('--');
+                $("#cpmText").html('--');
+                $("#totalCountsText").html('--');
+            }
+
+            if(dataObj.hasOwnProperty('no2')) {
+                $('#no2Text').html(dataObj['no2']['no2']);
+                NO2Data.push({'x': time, 'y': dataObj['no2']['no2']});
+            } else {
+                $('#no2Text').html("--");
+            }
+
+            if(dataObj.hasOwnProperty('fdh')) {
+                $('#hchoText').html(dataObj['fdh']['formaldehyde']);
+                FDHData.push({'x': time, 'y': dataObj['fdh']['formaldehyde']});
+            } else {
+                $('#hchoText').html("--");
+            }
+
+            // Deal with debug data
+            if(dataObj.hasOwnProperty('hardwareId')) {
+                $("#hwid").html(dataObj['hardwareId']);
+            }
+            
+            debugData = dataObj['debug'];
+
+            if(debugData.hasOwnProperty('location')) {
+                $("#location").html(debugData['location']['lat'] + ',' + debugData['location']['lon']);
+            }
+            
+            if(debugData.hasOwnProperty('appVersion') && debugData.hasOwnProperty('moduleVersion')) {
+                $("#appVersion").html(debugData['appVersion']);
+                $("#moduleVersion").html(debugData['moduleVersion']);
+            }
+
+            if(debugData.hasOwnProperty('throttle_state')) {
+                throttleData = debugData['throttle_state'];
+                $("#throttleState").html(throttleData['code']);
+                if(throttleData.hasOwnProperty('status_strings')) {
+                    $("#throttleStrings").html(throttleData['status_strings']);
+                }
+            }
+
+            if(debugData.hasOwnProperty('gpsStatus')) {
+                gpsData = debugData['gpsStatus'];
+                if(gpsData.hasOwnProperty('mode') && gpsData.hasOwnProperty('satellitesUsed')) {
+                    $("#gpsMode").html(gpsData['mode']);
+                    $("#gpsSatellites").html(gpsData['satellitesUsed']);
+                }
+            }
+
+            if(debugData.hasOwnProperty('aqUsed')) {
+                $('#aqUsedSpace').html(debugData['aqUsed']);
+            }
+
+            if(debugData.hasOwnProperty('csvEnabled')) {
+                $('#csvStatus').html(String(debugData['csvEnabled']));
+            }
+
+            if(debugData.hasOwnProperty('aqUsed')) {
+                $('#debugStatus').html(String(debugData['debugEnabled']));
+            }
+
+            if(debugData.hasOwnProperty('remoteWriteStats')) {
+                if(debugData['remoteWriteStats']['remoteWriteSuccess'] != 0) {
+                    date.setTime(debugData['remoteWriteStats']['remoteWriteSuccess'] * 1000);
+                    $('#remoteWriteSuccessTime').html(date.toUTCString());
+                }
+
+                if(debugData['remoteWriteStats']['remoteWriteFail'] != 0) {
+                    date.setTime(debugData['remoteWriteStats']['remoteWriteFail'] * 1000);
+                    $('#remoteWriteFailTime').html(date.toUTCString());
+                }
+            }
+
+            // Keep only the last 1 hour of data
+            trimData([tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data, NO2Data, NRDData, FDHData], 3600000);
+
+            updateCharts(tempData, humidityData, VOCData, CO2Data, PM1Data, PM25Data, PM4Data, PM10Data, NO2Data, NRDData, FDHData);
+        }
+    </script>
+
+    <title>ESDK UI</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand">
+                <img src="esdk.svg" alt="ESDK Logo" class="d-inline-block align-text-center" height="24">Air Quality Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <span class="nav-link active" id="homeNavButton" onclick="$('#debugPage').hide(); $('#statsPage').show(); $('#homeNavButton').addClass('active'); $('#debugNavButton').removeClass('active');">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link" id="debugNavButton" onclick="$('#statsPage').hide(); $('#debugPage').show(); $('#homeNavButton').removeClass('active'); $('#debugNavButton').addClass('active');">Debug</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid" style="padding-top:0.5%">
+        <div id="statsPage">
+            <div class="row row-cols-1 row-cols-md-4 g-4">
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id='temperatureChart'></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">Temperature & relative humidity</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Temperature: <span id="tempText"></span>°C</li>
+                                <li class="list-group-item">Humidity: <span id="humidityText"></span>%</li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id='VOCChart'></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">VOC Index</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">VOCs: <span id="vocText"></span></li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id='CO2Chart'></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">CO<sub>2</sub> Concentration</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">CO<sub>2</sub>: <span id="co2Text"></span>ppm</li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id='PMChart'></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">Particulate Matter Counts</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">PM1.0: <span id="pm1Text"></span></li>
+                                <li class="list-group-item">PM2.5: <span id="pm25Text"></span></li>
+                                <li class="list-group-item">PM4.0: <span id="pm4Text"></span></li>
+                                <li class="list-group-item">PM10: <span id="pm10Text"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id='NO2Chart'></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">NO<sub>2</sub> Concentration</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">NO<sub>2</sub>: <span id="no2Text"></span>ppm</li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id='NRDChart'></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">Nuclear activity</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Counts per second: <span id="cpsText"></span>cps</li>
+                                <li class="list-group-item">Counts per minute: <span id="cpmText"></span>cpm</li>
+                                <li class="list-group-item">Total counts: <span id="totalCountsText"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <canvas class="card-img-top" id="FDHChart"></canvas>
+                        <div class="card-body">
+                            <h5 class="card-title">Formaldehyde concentration</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Formaldehyde: <span id="hchoText"></span>ppb</li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="debugPage" style="display:none;">
+            <div class="row row-cols-1 row-cols-md-4 g-4">
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Hardware ID</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">HWID: <code id="hwid"></code></li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">GPS Status</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">GPS lock mode: <code id="gpsMode"></code></li>
+                                <li class="list-group-item">GPS satellites used: <code id="gpsSatellites"></code></li>
+                                <li class="list-group-item">Location: <code id="location"></code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">CSV Logging</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">CSV logging enabled: <code id="csvStatus"></code></li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Debug Information</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Application version: <code id="appVersion"></code></li>
+                                <li class="list-group-item">DesignSpark.ESDK module version: <code id="moduleVersion"></code></li>
+                                <li class="list-group-item">Debug output enabled: <code id="debugStatus"></code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">AQ Partition usage</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Percentage full: <code id="aqUsedSpace"></code>%</li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Power status</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Throttle string: <code id="throttleStrings"></code></li>
+                                <li class="list-group-item"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Remote write status</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Last successful write: <code id="remoteWriteSuccessTime"></code></li>
+                                <li class="list-group-item">Last unsuccessful write: <code id="remoteWriteFailTime"></code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer bg-light">
+        <span><img src="https://github.com/DesignSparkRS/DesignSpark.ESDK/raw/main/docs/images/DS_logo_200w.png" alt="DesignSpark Logo"></span>
+    </footer>
+
+    <!-- Leave this at the bottom -->
+    <script src="bootstrap.bundle.min.js"></script>
+    <script type="text/javascript">
+        showTempChart(tempData, humidityData);
+        showVOCChart(VOCData);
+        showCO2Chart(CO2Data);
+        showPMChart(PM1Data, PM25Data, PM4Data, PM10Data);
+        showNO2Chart(NO2Data);
+        showNRDChart(NRDData);
+        showFDHChart(FDHData);
+    </script>
+</body>
+</html>

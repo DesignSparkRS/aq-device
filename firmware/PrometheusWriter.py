@@ -16,11 +16,12 @@ import calendar
 import copy
 
 class PrometheusWriter:
-    def __init__(self, configDict, debug=False, hwid=0, loggingLevel='full', additionalLabels={}):
+    def __init__(self, configDict, debug=False, hwid=0, loggingLevel='full', additionalLabels={}, remoteWriteTimestamps=None):
         self.logger = AppLogger.getLogger(__name__, debug, loggingLevel)
         self.configDict = configDict
         self.hardwareId = hwid
         self.friendlyName = configDict["friendlyname"]
+        self.remoteWriteTimestamps = remoteWriteTimestamps
 
         # Add additional Prometheus labels from dictionary, if dictionary is not empty
         if additionalLabels:
@@ -143,8 +144,12 @@ class PrometheusWriter:
                     # Check for valid success code (not using response.ok as this includes 2xx and 3xx codes)
                     if 200 <= response.status_code <= 299:
                         self.logger.debug("Successfully posted Prometheus data, reponse {}".format(response.text))
+                        if self.remoteWriteTimestamps:
+                            self.remoteWriteTimestamps['remoteWriteSuccess'] = int(datetime.now().timestamp())
                     else:
                         self.logger.error("Failed posting Prometheus data! Status code {}, response {}".format(response.status_code, response.text))
+                        if self.remoteWriteTimestamps:
+                            self.remoteWriteTimestamps['remoteWriteFail'] = int(datetime.now().timestamp())
                 except Exception as e:
                     self.logger.error("Could not post Prometheus data, reason {}".format(e))
             

@@ -13,6 +13,7 @@ from datetime import datetime
 class CsvWriter:
     def __init__(self, friendlyName='', debug=False, hwid=0, loggingLevel='full'):
         self.logger = AppLogger.getLogger(__name__, debug, loggingLevel)
+        #self.logger = AppLogger.getLogger("CsvWriter", debug, loggingLevel)
         self.hardwareId = hwid
         self.friendlyName = friendlyName
         self.csvFilename = "/aq/data/{fn}_{hwid}_{ts}.csv".format(fn=self.friendlyName, \
@@ -20,7 +21,7 @@ class CsvWriter:
             ts=datetime.utcnow().strftime("%Y_%m_%d-%H_%M_%S"))
 
         # Should more sensors be added, this should be updated to reflect available values
-        self.csvColumns = ['timestamp', 'temperature', 'humidity', 'vocIndex', 'co2', 'pm1.0', 'pm2.5', 'pm4.0', 'pm10']
+        self.csvColumns = ['timestamp', 'temperature', 'humidity', 'vocIndex', 'co2', 'pm1.0', 'pm2.5', 'pm4.0', 'pm10', 'cps', 'cpm', 'totalCounts', 'no2', 'formaldehyde']
 
         with open(self.csvFilename, 'w') as fh:
             csvWriter = csv.DictWriter(fh, fieldnames=self.csvColumns)

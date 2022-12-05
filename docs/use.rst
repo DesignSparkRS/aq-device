@@ -4,12 +4,46 @@ Use
 Basic
 *****
 
-Local display
-=============
+Device dashboard
+================
 
 Upon powering up there will be a short delay and following which sensor readings will shown on the display.
 
 If the screensaver is activated, simply touch the screen to wake up.
+
+If you have an NO2 Sensor, Nuclear Radiation Detector or Formaldehyde Sensor, readings for these are accessed via the second screen and use the inner two physical buttons to navigate between screens.
+
+Tap a sensor statistics panel to switch to a plot view and tap again to revert.
+
+The debug screen can be accessed via a long press on the touch screen, following which a short press will switch to the second debug page. Another long press will return to the dashboard.
+
+LAN dashboard
+=============
+
+It is also possible to access a web dashboard via the local area network, by pointing a browser at the URL:
+
+http://airquality.local
+
+Plot traces my be toggled on and off by clicking on their legend. This can prove useful with sensors such as PM2, where there are multiple lines which may not be easy to distinguish from each other.
+
+A debug screen may be accessed via the Debug tab.
+
+CSV logging
+===========
+
+In addition to being configured via :code:`aq.toml` to start at boot time, CSV logging may be enabled by pressing the top physical button, and disabled again via a second press.
+
+A small flashing icon will be present in the top-right corner of the device screen when CSV logging is enabled.
+
+.. warning:: 
+   There may be a delay of a few seconds after a button press before logging is started/stopped, hence avoid repeatedly pressing.
+
+GPS
+===
+
+If GPS has been enabled and the ESDK has a fix, a small cross hairs icon will be present in the top-right corner of the device screen.
+
+GPS satellite status and position is available via the debug screen.
 
 Shutting down
 =============

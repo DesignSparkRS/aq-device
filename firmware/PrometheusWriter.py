@@ -11,7 +11,7 @@ import snappy
 import prometheus_pb2
 #from prometheus_pb2 import TimeSeries, Label, Labels, Sample, WriteRequest
 from datetime import datetime
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 import calendar
 import copy
 
@@ -121,7 +121,7 @@ class PrometheusWriter:
                 compressed = snappy.compress(uncompressed)
 
                 username = self.configDict["instance"]
-                password = self.configDict["key"]
+                password = quote_plus(self.configDict["key"])
                 baseUrl = self.configDict["url"]
                 splitUrl = urlparse(baseUrl)
 

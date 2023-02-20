@@ -323,6 +323,12 @@ def getConfig():
             config_logger.error("Missing [ESDK] configuration section!")
 
         # Optional config key checking
+        if 'NO2' in config:
+            if 'sensitivity' not in config['NO2']:
+                config_logger.error("Missing [NO2] sensitivity code, must be provided if using NO2 sensor")
+        else:
+            config_logger.warning("Missing [NO2] configuration section, must be provided if using NO2 sensor!")
+
         if 'local' not in config:
             config_logger.warning("Optional [local] configuration section not provided")
         if 'mqtt' not in config:

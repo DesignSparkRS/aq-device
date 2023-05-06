@@ -63,11 +63,14 @@ organising collaborative projects.
 .. warning::
    The :code:`friendlyname` must not be changed without good reason, as this is used as the key for constructing visualisations and whenever this is changed, series data and hence plots etc. will become non-contigious.   
 
-The :code:`location` should be set to e.g. "kitchen" or "livingroom" etc. A
-taxonomy has been created and for details, see the :doc:`Air Quality Project
-Taxonomy <dsdocs:aq/taxonomy>`. Please be sure to pick a location from this
-list, so as to avoid having multiple different labels in use for the same
-location, which will be important when it comes to interpreting data.
+The :code:`location` should be set to e.g. "kitchen", "livingroom" or "outdoor" 
+etc. A taxonomy has been created and for details, see the :doc:`Air Quality Project
+Taxonomy <dsdocs:aq/taxonomy>`. Please be sure to pick a location from this list, 
+so as to avoid having multiple different labels in use for the same location, 
+which will be important when it comes to interpreting data.
+
+.. warning::
+    The :code:`location` must be set to "mixed" if using the Cabled Range Extender boards and there are sensor chains in two different locations.
 
 The :code:`latitude` and :code:`longitude` should be set according to the
 geolocation. While there are no plans to show data from individual sensors at
@@ -115,6 +118,34 @@ to the cloud.
 
 .. warning::
     The values for tag and project may contain letters, numbers and underscores only, and should be no more than 12 characters in length.
+
+Sensor config
+*************
+
+Most sensors don't require any configuration, but some may have optional or mandatory config parameters.
+
+NO2
+===
+
+NO2 sensor configation is located within the :code:`[NO2]` section. 
+
+The NO2 module uses an electrochemical sensor and its sensitivity must be configured, otherwise the application will ignore it.
+The sensitivity is printed on a label underneath the sensor element, which is the small square board plugged into the top of the 3-board stack.
+The sensitivity value may also have been provided to you along with the module.
+
+Example config::
+
+    [NO2]
+    sensitivity = -21.08
+
+.. list-table:: Mandatory parameters
+   :widths: auto
+   :header-rows: 1
+
+   * - Key
+     - Description
+   * - :code:`sensitivity`
+     - Value
 
 GPS
 ***
@@ -219,6 +250,9 @@ A configuration example that uses all the available parameters::
     debug = false
     gps = true
 
+    [NO2]
+    sensitivity = -21.08
+
     [local]
     csv = true
 
@@ -236,7 +270,7 @@ A configuration example that uses all the available parameters::
 
     [prometheus.aqpublic]
     instance = "username@domain.com"
-    key = "mySecretPassword>"
+    key = "mySecretPassword"
     url = "https://aq-prom.designspark.io/prometheus"
     interval = 300
 

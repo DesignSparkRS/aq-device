@@ -3,11 +3,16 @@ Installation
 
 A pre-configured Micro SD card image is provided and presently the supported method of installation.
 
-The latest image is dated: :code:`1st December 2022`
+The latest image is dated: :code:`5th May 2023`
+
+.. note:: 
+
+   This release adds support for the very latest Main board (labelled v1.0) and the NO2, FDH and NRD sensors.
+   If you have been provided with any of these and are running an older release, please upgrade.
 
 Start by downloading the image:
 
-https://downloads.designspark.io/projects/aq-device/images/aq-pi-011222.zip
+https://downloads.designspark.io/projects/aq-device/images/aq-pi-050523.zip
 
 Following which this should be uncompressed and written out to a Micro SD card that is at least 8GB in size. 
 

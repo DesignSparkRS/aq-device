@@ -7,7 +7,7 @@ Basic
 Device dashboard
 ================
 
-Upon powering up there will be a short delay and following which sensor readings will shown on the display.
+Upon powering up there will be a short delay and following which sensor readings will shown on the display. If you have a v1.0 or later Main board (see the silkscreen labelling) the buzzer will also sound upon startup.
 
 If the screensaver is activated, simply touch the screen to wake up.
 

@@ -48,9 +48,33 @@
 
         if (window.location.hostname == '') {
             wsUrl = "ws://127.0.0.1:8765";
+            controlWsUrl = "ws://127.0.0.1:8766";
         }
 
+
         let socket = new WebSocket(wsUrl);
+
+        let controlSocket = new WebSocket(controlWsUrl);
+
+        // As soon as the socket opens ask for a file count
+        controlSocket.onopen = function(event) {
+            controlSocket.send(JSON.stringify({'command':'filecount'}));
+        }
+
+        controlSocket.onmessage = function(event) {
+            controlDataObj = JSON.parse(event.data);
+
+            if(controlDataObj.hasOwnProperty('result')) {
+                if(controlDataObj['result'].hasOwnProperty('filecount')) {
+                    $('#filesToUploadCount').html(controlDataObj['result']['filecount']);
+                }
+
+                if(controlDataObj['result'].hasOwnProperty('success')) {
+                    $('#fileSuccessCount').html(controlDataObj['result']['success']);
+                    $('#fileFailCount').html(controlDataObj['result']['fail']);
+                }
+            }
+        }
 
         socket.onmessage = function(event) {
             dataObj = JSON.parse(event.data);
@@ -207,10 +231,13 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <span class="nav-link active" id="homeNavButton" onclick="$('#debugPage').hide(); $('#statsPage').show(); $('#homeNavButton').addClass('active'); $('#debugNavButton').removeClass('active');">Home</a>
+                        <span class="nav-link active" id="homeNavButton" onclick="$('#debugPage').hide(); $('#uploadPage').hide(); $('#statsPage').show(); $('#homeNavButton').addClass('active'); $('#uploadNavButton').removeClass('active'); $('#debugNavButton').removeClass('active');">Home</a>
                     </li>
                     <li class="nav-item">
-                        <span class="nav-link" id="debugNavButton" onclick="$('#statsPage').hide(); $('#debugPage').show(); $('#homeNavButton').removeClass('active'); $('#debugNavButton').addClass('active');">Debug</a>
+                        <span class="nav-link" id="debugNavButton" onclick="$('#statsPage').hide(); $('#uploadPage').hide(); $('#debugPage').show(); $('#homeNavButton').removeClass('active'); $('#uploadNavButton').removeClass('active'); $('#debugNavButton').addClass('active');">Debug</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link" id="uploadNavButton" onclick="$('#statsPage').hide(); $('#debugPage').hide(); $('#uploadPage').show(); $('#homeNavButton').removeClass('active'); $('#debugNavButton').removeClass('active'); $('#uploadNavButton').addClass('active');">Offline File Upload</a>
                     </li>
                 </ul>
             </div>
@@ -392,6 +419,23 @@
                 </div>
             </div>
         </div>
+        <div id="uploadPage" style="display:none;">
+            <div class="row row-cols-1 row-cols-md-4 g-4">
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Upload Stored Data</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Total files to upload: <code id="filesToUploadCount">--</code></li>
+                                <li class="list-group-item">Files uploaded: <code id="fileSuccessCount">--</code></li>
+                                <li class="list-group-item">Files failed: <code id="fileFailCount">--</code></li>
+                                <li class="list-group-item"><button type="button" class="btn btn-primary" onclick="triggerUpload();">Upload files</button> <button type="button" class="btn btn-secondary" onclick="refreshFileData();">Refresh</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="footer bg-light">
         <span><img src="ds_logo.svg" alt="DesignSpark Logo" style="width:200px;"></span>
@@ -407,6 +451,18 @@
         showNO2Chart(NO2Data);
         showNRDChart(NRDData);
         showFDHChart(FDHData);
+
+        function triggerUpload() {
+            controlSocket.send(JSON.stringify({'command':'filecount'}));
+            controlSocket.send(JSON.stringify({"command":"upload"}));
+            controlSocket.send(JSON.stringify({'command':'filecount'}));
+        };
+
+        function refreshFileData() {
+            controlSocket.send(JSON.stringify({'command':'filecount'}));
+            $('#fileSuccessCount').html('--');
+            $('#fileFailCount').html('--');
+        };
     </script>
 </body>
 </html>

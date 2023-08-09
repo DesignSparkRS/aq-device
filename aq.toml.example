@@ -7,9 +7,15 @@ debug = false
 
 [local]
 csv = false
+logging = "off"
 
 [mqtt]
 broker = "localhost"
 basetopic = "airquality"
 username = ""
 password = ""
+
+[loki.private]
+instance = ""
+key = ""
+url = ""

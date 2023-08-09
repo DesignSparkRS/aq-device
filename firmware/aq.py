@@ -19,10 +19,12 @@ import re
 import shutil
 import sys
 import RPi.GPIO as GPIO
+from datetime import datetime
 from DesignSpark.ESDK import MAIN, THV, CO2, PM2, NO2, NRD, FDH, AppLogger
-import PrometheusWriter, CsvWriter, MQTT, WebServer
+import PrometheusWriter, CsvWriter, MQTT, WebServer, LokiHandler
 
 configFile='/boot/aq/aq.toml'
+lokiDataDirectory='/aq/data/offline/'
 debugEnabled = False
 
 loggingButton = 19
@@ -42,6 +44,22 @@ async def websocketPush(websocket, path):
         localData.update({"debug": debugData})
         await websocket.send(json.dumps(localData, ensure_ascii=False))
         await asyncio.sleep(WEBSOCKET_UPDATE_INTERVAL)
+
+async def controlWebsocket(websocket, path):
+    logger.debug("Websocket connection from {}".format(websocket.remote_address))
+    async for message in websocket:
+        logger.debug("Control websocket message {}".format(message))
+        message = json.loads(message)
+        if 'command' in message:
+            if message['command'] == "filecount":
+                await websocket.send(json.dumps({"result":lokiLogger.GetFileCount()}))
+
+            if message['command'] == "upload":
+                config = getLokiConfig()
+                instance = config['instance']
+                key = config['key']
+                result = lokiLogger.UploadLogFiles(instance, key)
+                await websocket.send(json.dumps({"result":result}))
 
 def main():
     GPIO.setwarnings(False)
@@ -78,6 +96,9 @@ def main():
 
     global remoteWriteTimestamps
     remoteWriteTimestamps = {'remoteWriteSuccess': 0, 'remoteWriteFail': 0}
+
+    global lokiLogger
+    lokiLogger = LokiHandler.LokiHandler(lokiDataDirectory, debugEnabled)
 
     debugData.update({'csvEnabled': getCsvEnabled()})
     debugData.update({'debugEnabled': debugEnabled})
@@ -165,15 +186,33 @@ def main():
     webServerThreadHandle.name = "webServerThread"
     webServerThreadHandle.start()
 
-    logger.debug("Starting asyncio websocket")
+    logger.debug("Starting control websocket thread")
+    controlWebsocketThreadHandle = threading.Thread(target=controlWebsocketThread, \
+        args=(), \
+        daemon=True)
+    controlWebsocketThreadHandle.name = "controlWebsocketThread"
+    controlWebsocketThreadHandle.start()
+
+    logger.debug("Starting asyncio data websocket")
     asyncio.run(startWebsocket())
 
     while True:
         pass
 
 async def startWebsocket():
-    logger.debug("Started websocket")
+    logger.debug("Started data websocket")
     async with websockets.serve(websocketPush, "0.0.0.0", 8765):
+        await asyncio.Future()  # run forever
+
+def controlWebsocketThread():
+    logger.debug("Started control websocket thread")
+    logger.debug("Starting asyncio control websocket")
+    asyncio.run(startControlWebsocket())
+
+
+async def startControlWebsocket():
+    logger.debug("Started control websocket")
+    async with websockets.serve(controlWebsocket, "0.0.0.0", 8766):
         await asyncio.Future()  # run forever
 
 def webServerThread(debugEnabled, loggingLevel):
@@ -244,8 +283,35 @@ def prometheusUpdateThread(config, debugEnabled, sensorData, hwid, loggingLevel)
         additionalLabels=configData['ESDK'], \
         remoteWriteTimestamps = remoteWriteTimestamps)
 
+
+    if getOfflineLoggingConfig() == "auto":
+        lokiEnabled = True
+    else:
+        lokiEnabled = False
+
     while True:
-        writer.writeData(sensorData)
+        try:
+            writer.writeData(sensorData)
+        except Exception as e:
+            if lokiEnabled:
+                # Add additional data to sensor data dictionary
+                sensorDataCopy = copy.deepcopy(sensorData)
+                sensorDataCopy.update({'friendlyname': getFriendlyName()})
+
+                if 'project' in configData['ESDK']:
+                    sensorDataCopy.update({'project': configData['ESDK']['project']})
+                if 'location' in configData['ESDK']:
+                    sensorDataCopy.update({'location': configData['ESDK']['location']})
+                if 'tag' in configData['ESDK']:
+                    sensorDataCopy.update({'tag': configData['ESDK']['tag']})
+
+                # Generate timestamp in nanoseconds (as per Loki documentation)
+                ts = lokiLogger.dt2ts(datetime.utcnow()) * 1000000000
+
+                lokiLogger.WriteLogFile(data=sensorDataCopy, timestamp=ts)
+            else:
+                pass
+
         time.sleep(localConfig['interval'])
 
 def csvUpdateThread(debugEnabled, sensorData, hwid, loggingLevel):
@@ -322,6 +388,17 @@ def getConfig():
         else:
             config_logger.error("Missing [ESDK] configuration section!")
 
+        if 'loki' in config:
+            firstConfigKey = list(config['loki'].keys())[0]
+            if 'instance' not in config['loki'][firstConfigKey]:
+                config_logger.error("Missing [loki] 'instance' key")
+            if 'key' not in config['loki'][firstConfigKey]:
+                config_logger.error("Missing [loki] 'key' key")
+            if 'url' not in config['loki'][firstConfigKey]:
+                config_logger.error("Missing [loki] 'url' key")    
+
+
+
         # Optional config key checking
         if 'NO2' in config:
             if 'sensitivity' not in config['NO2']:
@@ -331,6 +408,9 @@ def getConfig():
 
         if 'local' not in config:
             config_logger.warning("Optional [local] configuration section not provided")
+        else:
+            if 'logging' not in config['local']:
+                config_logger.error("Missing [local] 'logging' key")
         if 'mqtt' not in config:
             config_logger.warning("Optional [mqtt] configuration section not provided")
         else:
@@ -371,6 +451,19 @@ def getPrometheusConfig():
         return(configData['prometheus'])
     else:
         return None
+
+def getOfflineLoggingConfig():
+    """ Return a string pertaining to Loki logging configuration """
+    if 'local' in configData:
+        if 'logging' in configData['local']:
+            return configData['local']['logging']
+    else:
+        return "off"
+
+def getLokiConfig():
+    if 'loki' in configData:
+        firstConfigKey = list(configData['loki'].keys())[0]
+        return configData['loki'][firstConfigKey]
 
 def getFriendlyName():
     """ Return the string of the device friendly name """

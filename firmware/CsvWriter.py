@@ -16,7 +16,7 @@ class CsvWriter:
         #self.logger = AppLogger.getLogger("CsvWriter", debug, loggingLevel)
         self.hardwareId = hwid
         self.friendlyName = friendlyName
-        self.csvFilename = "/aq/data/{fn}_{hwid}_{ts}.csv".format(fn=self.friendlyName, \
+        self.csvFilename = "/aq/data/csv/{fn}_{hwid}_{ts}.csv".format(fn=self.friendlyName, \
             hwid=self.hardwareId, \
             ts=datetime.utcnow().strftime("%Y_%m_%d-%H_%M_%S"))
 
